@@ -55,6 +55,15 @@ db.serialize(() => {
     status TEXT DEFAULT 'pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS reviews (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER,
+    craftsman_name TEXT NOT NULL,
+    rating INTEGER NOT NULL CHECK(rating >= 1 AND rating <= 5),
+    comment TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
 });
 
 // ── Auth Middleware ───────────────────────────────────────
@@ -145,6 +154,34 @@ app.post('/api/bookings', authMiddleware, (req, res) => {
 
 // Health check
 app.get('/api/health', (req, res) => res.json({ status: 'ok', message: 'FixNest API läuft!' }));
+
+
+
+// Bewertung hinzufügen
+app.post('/api/reviews', authMiddleware, (req, res) => {
+  const { craftsman_name, rating, comment } = req.body;
+  if (!craftsman_name || !rating)
+    return res.status(400).json({ error: 'Pflichtfelder fehlen' });
+  db.run(
+    `INSERT INTO reviews (user_id, craftsman_name, rating, comment) VALUES (?,?,?,?)`,
+    [req.user.id, craftsman_name, rating, comment],
+    function(err) {
+      if (err) return res.status(500).json({ error: err.message });
+      res.json({ id: this.lastID, craftsman_name, rating, comment });
+    }
+  );
+});
+
+// Bewertungen für einen Handwerker abrufen
+app.get('/api/reviews/:craftsman', (req, res) => {
+  db.all(
+    `SELECT reviews.*, users.first_name, users.last_name 
+     FROM reviews LEFT JOIN users ON reviews.user_id = users.id
+     WHERE reviews.craftsman_name = ? ORDER BY reviews.created_at DESC`,
+    [req.params.craftsman],
+    (err, rows) => res.json(rows || [])
+  );
+});
 
 // Alle anderen Routen → index.html
 app.get('/{*path}', (req, res) => {

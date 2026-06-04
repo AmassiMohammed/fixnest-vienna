@@ -678,10 +678,14 @@ footer{background:#090B14;color:rgba(255,255,255,.6);padding:56px 2rem 28px}
       <div class="info-box"><div class="ib-lbl">Reaktionszeit</div><div class="ib-val">~15 Min.</div></div>
     </div>
     <div style="margin-bottom:16px">
-      <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)">Kundenbewertungen</h4>
-      <div class="review-row"><div class="rev-top"><span class="rev-name">Lisa M.</span><span class="stars">★★★★★</span></div><div class="rev-txt">Super schnell und professionell! Wasserhahn in 20 Min. repariert.</div></div>
-      <div class="review-row"><div class="rev-top"><span class="rev-name">Thomas B.</span><span class="stars">★★★★★</span></div><div class="rev-txt">Sehr freundlich und pünktlich. Kann ich nur empfehlen.</div></div>
-    </div>
+  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+    <h4 style="font-size:14px;font-weight:700;color:var(--text)">Kundenbewertungen</h4>
+    <button onclick="openReviewModal()" style="background:none;border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:var(--r-xs);cursor:pointer">+ Bewertung</button>
+  </div>
+  <div id="mReviews">
+    <p style="font-size:13px;color:var(--text3)">Wird geladen...</p>
+  </div>
+</div>
     <div class="m-actions">
       <button class="m-chat-btn" onclick="startChat()">💬 Nachricht senden</button>
       <button class="m-book-btn" onclick="doBook()">📅 Termin buchen</button>
@@ -721,6 +725,28 @@ footer{background:#090B14;color:rgba(255,255,255,.6);padding:56px 2rem 28px}
 </div>
 
 <div class="toast" id="toast"><span class="t-icon" id="tIco">✅</span><div><div class="t-title" id="tTit">–</div><div class="t-sub" id="tSub">–</div></div></div>
+
+<!-- REVIEW MODAL -->
+<div class="overlay" id="reviewM" onclick="bgC(event,'reviewM')">
+  <div class="modal" style="max-width:400px">
+    <button class="modal-x" onclick="closeM('reviewM')">✕</button>
+    <h2>Bewertung schreiben</h2>
+    <p class="m-sub" id="reviewFor">–</p>
+    <div style="text-align:center;margin:16px 0">
+      <div style="font-size:36px;cursor:pointer;letter-spacing:4px" id="starRow">
+        <span onclick="setStar(1)">☆</span>
+        <span onclick="setStar(2)">☆</span>
+        <span onclick="setStar(3)">☆</span>
+        <span onclick="setStar(4)">☆</span>
+        <span onclick="setStar(5)">☆</span>
+      </div>
+      <p style="font-size:12px;color:var(--text3);margin-top:6px" id="starTxt">Sterne auswählen</p>
+    </div>
+    <div class="field"><label>Kommentar</label><textarea id="revComment" placeholder="Wie war deine Erfahrung?"></textarea></div>
+    <div class="err" id="revErr"></div>
+    <button class="form-btn prim" onclick="submitReview()">Bewertung absenden</button>
+  </div>
+</div>
 
 <script>
 let user=null,craft=null;
@@ -803,14 +829,26 @@ function updChat(){
 }
 function selD(el,name,sub){document.querySelectorAll('.md').forEach(r=>r.classList.remove('act'));el.classList.add('act');document.getElementById('dName').textContent=name;document.getElementById('dSub').textContent=sub+' verfügbar';}
 function setPill(btn){btn.closest('.filter-row').querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));btn.classList.add('active');}
-function openCraft(name,init,role,dist,rat,color,online){
+async function openCraft(name,init,role,dist,rat,color,online){
   craft={name,init,role,dist,rat,color,online};
-  document.getElementById('mAv').textContent=init;document.getElementById('mAv').style.background=color;
-  document.getElementById('mName').textContent=name;document.getElementById('mRole').textContent=role+' · '+dist;
-  document.getElementById('mRat').textContent='★ '+rat+' (38 Bewertungen)';document.getElementById('mDist').textContent=dist;
+  document.getElementById('mAv').textContent=init;
+  document.getElementById('mAv').style.background=color;
+  document.getElementById('mName').textContent=name;
+  document.getElementById('mRole').textContent=role+' · '+dist;
+  document.getElementById('mRat').textContent='★ '+rat;
+  document.getElementById('mDist').textContent=dist;
   document.getElementById('mDot').className='sdot'+(online?'':' off');
-  document.getElementById('mSt').textContent=online?'Online':'Offline';document.getElementById('mSt').style.color=online?'var(--green)':'var(--text3)';
+  document.getElementById('mSt').textContent=online?'Online':'Offline';
+  document.getElementById('mSt').style.color=online?'var(--green)':'var(--text3)';
+  document.getElementById('mReviews').innerHTML='<p style="font-size:13px;color:var(--text3)">Wird geladen...</p>';
   openM('craftM');
+  const res = await fetch('/api/reviews/'+encodeURIComponent(name));
+  const reviews = await res.json();
+  const avg = reviews.length?(reviews.reduce((s,r)=>s+r.rating,0)/reviews.length).toFixed(1):rat;
+  document.getElementById('mRat').textContent='★ '+avg+' ('+reviews.length+' Bewertungen)';
+  document.getElementById('mReviews').innerHTML = reviews.length===0
+    ? '<p style="font-size:13px;color:var(--text3)">Noch keine Bewertungen.</p>'
+    : reviews.slice(0,3).map(r=>`<div class="review-row"><div class="rev-top"><span class="rev-name">${r.first_name||'Anonym'} ${r.last_name?r.last_name[0]+'.':''}</span><span class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span></div><div class="rev-txt">${r.comment||''}</div></div>`).join('');
 }
 function startChat(){if(!user){closeM('craftM');openM('authM');showTab('login');return;}closeM('craftM');goPage('chat');}
 function doBook(){if(!user){closeM('craftM');openM('authM');showTab('login');return;}closeM('craftM');document.getElementById('bookFor').textContent='Termin mit: '+(craft?.name||'–');openM('bookM');}
@@ -880,6 +918,43 @@ function addMsg(mid,txt,type,isImg){
 function sendMsg(mid,iid){const i=document.getElementById(iid);const t=i.value.trim();if(!t)return;i.value='';addMsg(mid,t,'s',false);}
 function sendImg(mid){addMsg(mid,'','s',true);}
 function toggleFaq(btn){const item=btn.closest('.faq-item');const open=item.classList.contains('open');document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));if(!open)item.classList.add('open');}
+let selectedStar = 0;
+function setStar(n){
+  selectedStar = n;
+  const stars = document.getElementById('starRow').querySelectorAll('span');
+  stars.forEach((s,i) => s.textContent = i < n ? '★' : '☆');
+  const txt = ['','Schlecht','Nicht gut','OK','Gut','Sehr gut!'];
+  document.getElementById('starTxt').textContent = txt[n];
+}
+function openReviewModal(){
+  if(!user){ closeM('craftM'); openM('authM'); showTab('login'); return; }
+  selectedStar = 0;
+  document.getElementById('starRow').querySelectorAll('span').forEach(s=>s.textContent='☆');
+  document.getElementById('starTxt').textContent = 'Sterne auswählen';
+  document.getElementById('revComment').value = '';
+  document.getElementById('revErr').style.display = 'none';
+  document.getElementById('reviewFor').textContent = 'Handwerker: '+(craft?.name||'–');
+  openM('reviewM');
+}
+async function submitReview(){
+  const err = document.getElementById('revErr');
+  err.style.display = 'none';
+  if(!selectedStar){ err.textContent='Bitte Sterne auswählen'; err.style.display='block'; return; }
+  const comment = document.getElementById('revComment').value.trim();
+  const token = localStorage.getItem('token');
+  try {
+    const res = await fetch('/api/reviews', {
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body: JSON.stringify({craftsman_name: craft?.name, rating: selectedStar, comment})
+    });
+    const data = await res.json();
+    if(!res.ok){ err.textContent=data.error||'Fehler'; err.style.display='block'; return; }
+    closeM('reviewM');
+    toast('⭐','Bewertung gespeichert!','Danke für dein Feedback.');
+    openCraft(craft.name,craft.init,craft.role,craft.dist,craft.rat,craft.color,craft.online);
+  } catch { err.textContent='Server nicht erreichbar'; err.style.display='block'; }
+}
 </script>
 </body>
 </html>
