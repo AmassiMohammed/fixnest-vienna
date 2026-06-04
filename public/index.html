@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>FixNest Vienna – Smart Local Repair & Tool Sharing</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#2E7DD1;--accent-dark:#1A5DA8;--green:#18A16A;--green-light:#E0F5EC;--red:#D94040;--star:#F0A500;--r-xs:6px;--r-sm:10px;--r-md:14px;--r-lg:22px;--r-xl:30px;--shadow-sm:0 1px 4px rgba(0,0,0,.06);--shadow-md:0 4px 20px rgba(0,0,0,.09);--shadow-lg:0 12px 40px rgba(0,0,0,.13)}
+[data-theme="light"]{--bg:#F4F6FA;--bg2:#EAECF3;--card:#FFFFFF;--card2:#F0F3F9;--text:#1C1F35;--text2:#5C637A;--text3:#9399B0;--border:rgba(0,0,0,.07);--border2:rgba(0,0,0,.13);--nav:rgba(244,246,250,.93);--input:#F0F3F9;--tag-bg:#EAF3FC;--tag-txt:#1A5DA8;--map-fill:#C5DCEF;--map-act:#2E7DD1;--map-bg:#E4EEF7}
+[data-theme="dark"]{--bg:#10121C;--bg2:#181B2A;--card:#1C2035;--card2:#232842;--text:#E8EAF4;--text2:#8A90AA;--text3:#555B75;--border:rgba(255,255,255,.07);--border2:rgba(255,255,255,.13);--nav:rgba(16,18,28,.95);--input:#232842;--tag-bg:#1A3A5C;--tag-txt:#7DBCF0;--map-fill:#1E2D42;--map-act:#2E7DD1;--map-bg:#141D2C}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;transition:background .3s,color .3s;min-height:100vh}
+h1,h2,h3,h4{font-family:'Syne',sans-serif;line-height:1.15;color:var(--text)}
+a{text-decoration:none;color:inherit}
+button{cursor:pointer;font-family:inherit}
+input,select,textarea{font-family:inherit}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:500;height:64px;padding:0 2rem;background:var(--nav);border-bottom:1px solid var(--border);backdrop-filter:blur(18px);display:flex;align-items:center;justify-content:space-between;transition:background .3s}
+.nav-logo{font-family:'Syne',sans-serif;font-size:21px;font-weight:800;color:var(--text);cursor:pointer;user-select:none}
+.nav-logo span{color:var(--accent)}
+.nav-links{display:flex;align-items:center;gap:2px}
+.nav-links a{font-size:14px;font-weight:500;color:var(--text2);padding:6px 13px;border-radius:var(--r-sm);transition:background .18s,color .18s;cursor:pointer}
+.nav-links a:hover{background:var(--card2);color:var(--text)}
+.nav-right{display:flex;align-items:center;gap:12px}
+.tog-wrap{display:flex;align-items:center;gap:7px}
+.tog-lbl{font-size:12px;font-weight:600;color:var(--text3)}
+.ios-tog{position:relative;width:40px;height:23px;cursor:pointer;display:inline-block}
+.ios-tog input{opacity:0;width:0;height:0}
+.ios-slider{position:absolute;inset:0;border-radius:99px;background:var(--text3);transition:background .25s}
+.ios-slider::before{content:'';position:absolute;width:17px;height:17px;border-radius:50%;background:#fff;top:3px;left:3px;transition:transform .25s;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+.ios-tog input:checked+.ios-slider{background:var(--accent)}
+.ios-tog input:checked+.ios-slider::before{transform:translateX(17px)}
+.btn-ghost{background:none;border:1.5px solid var(--border2);color:var(--text);font-size:13px;font-weight:600;padding:7px 17px;border-radius:var(--r-sm);transition:all .18s}
+.btn-ghost:hover{background:var(--card2)}
+.btn-primary{background:var(--accent);border:none;color:#fff;font-size:13px;font-weight:600;padding:8px 18px;border-radius:var(--r-sm);transition:background .18s,transform .1s;box-shadow:0 2px 8px rgba(46,125,209,.3)}
+.btn-primary:hover{background:var(--accent-dark);transform:translateY(-1px)}
+.user-menu-btn{display:none;align-items:center;gap:8px;background:var(--card2);border:1.5px solid var(--border2);color:var(--text);font-size:13px;font-weight:600;padding:7px 14px;border-radius:var(--r-sm);cursor:pointer;transition:all .18s}
+.user-menu-btn:hover{background:var(--card)}
+.user-av-sm{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+
+/* PAGES */
+.page{display:none;padding-top:64px}
+.page.active{display:block}
+
+/* HERO */
+.hero-wrap{max-width:1180px;margin:0 auto;padding:80px 2rem 70px;display:grid;grid-template-columns:1fr 420px;gap:64px;align-items:center}
+.hero-badge{display:inline-flex;align-items:center;gap:7px;background:var(--tag-bg);color:var(--tag-txt);font-size:12px;font-weight:700;padding:5px 13px;border-radius:99px;border:1px solid rgba(46,125,209,.2);margin-bottom:1.3rem}
+.hero h1{font-size:clamp(36px,4.5vw,54px);font-weight:800;margin-bottom:1.1rem;letter-spacing:-.02em}
+.hero h1 em{font-style:normal;color:var(--accent)}
+.hero p{font-size:16px;color:var(--text2);max-width:440px;line-height:1.75;margin-bottom:2rem}
+.hero-btns{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:2.5rem}
+.btn-lg{font-size:15px;font-weight:600;padding:13px 26px;border-radius:var(--r-md);border:none;cursor:pointer;transition:all .2s}
+.btn-lg.primary{background:var(--accent);color:#fff;box-shadow:0 3px 12px rgba(46,125,209,.35)}
+.btn-lg.primary:hover{background:var(--accent-dark);transform:translateY(-2px)}
+.btn-lg.outline{background:none;border:1.5px solid var(--border2);color:var(--text)}
+.btn-lg.outline:hover{background:var(--card)}
+.hero-stats{display:flex;gap:2.5rem}
+.stat-num{font-family:'Syne',sans-serif;font-size:28px;font-weight:800;color:var(--text)}
+.stat-lbl{font-size:12px;color:var(--text3);margin-top:1px}
+.hero-visual{background:var(--card);border:1px solid var(--border);border-radius:var(--r-xl);padding:22px;box-shadow:var(--shadow-md)}
+.hero-mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.mini-card{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-md);padding:15px}
+.mini-icon{width:36px;height:36px;border-radius:var(--r-sm);background:var(--tag-bg);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:9px}
+.mini-card h4{font-size:13px;font-weight:700;margin-bottom:3px;color:var(--text)}
+.mini-card p{font-size:11px;color:var(--text3);line-height:1.5}
+.craft-row{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-md);padding:12px 14px;display:flex;align-items:center;gap:11px;margin-bottom:8px;cursor:pointer;transition:border-color .18s}
+.craft-row:hover{border-color:var(--accent)}
+.av{width:36px;height:36px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff}
+.craft-info{flex:1;min-width:0}
+.craft-name{font-size:13px;font-weight:600;color:var(--text)}
+.craft-role{font-size:11px;color:var(--text3)}
+.stars{color:var(--star);font-size:11px}
+.sdot{width:8px;height:8px;border-radius:50%;background:var(--green);flex-shrink:0}
+.sdot.off{background:var(--text3)}
+.stxt{font-size:11px;font-weight:500;color:var(--green)}
+.stxt.off{color:var(--text3)}
+.mini-pb{background:none;border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:600;padding:4px 10px;border-radius:var(--r-xs);cursor:pointer;transition:all .18s;flex-shrink:0}
+.mini-pb:hover{background:var(--accent);color:#fff}
+
+/* SECTIONS */
+.section{padding:80px 2rem;background:var(--bg)}
+.section.alt{background:var(--card);border-top:1px solid var(--border);border-bottom:1px solid var(--border)}
+.sec-inner{max-width:1180px;margin:0 auto}
+.sec-label{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent);margin-bottom:10px}
+.sec-title{font-size:clamp(26px,3.5vw,40px);font-weight:800;margin-bottom:12px;color:var(--text)}
+.sec-sub{font-size:16px;color:var(--text2);max-width:520px;line-height:1.75}
+
+/* HOW IT WORKS */
+.how-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px;margin-top:2.5rem}
+.how-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);padding:26px;position:relative;transition:transform .2s,box-shadow .2s}
+.how-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+.how-num{font-family:'Syne',sans-serif;font-size:52px;font-weight:800;color:var(--border2);position:absolute;top:14px;right:18px;line-height:1}
+.how-icon{width:46px;height:46px;border-radius:var(--r-sm);background:var(--tag-bg);display:flex;align-items:center;justify-content:center;font-size:22px;margin-bottom:14px}
+.how-card h3{font-size:17px;font-weight:700;margin-bottom:7px;color:var(--text)}
+.how-card p{font-size:14px;color:var(--text2);line-height:1.65}
+
+/* MAP */
+.map-layout{display:grid;grid-template-columns:1fr 340px;gap:30px;align-items:start;margin-top:2rem}
+.filter-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px}
+.pill{background:var(--card2);border:1px solid var(--border);color:var(--text2);font-size:12px;font-weight:600;padding:5px 14px;border-radius:99px;cursor:pointer;transition:all .18s}
+.pill:hover,.pill.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.map-svg-wrap{background:var(--map-bg);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden}
+.map-svg-wrap svg{width:100%;height:auto;display:block}
+.md{fill:var(--map-fill);stroke:var(--card);stroke-width:2.5;cursor:pointer;transition:fill .2s}
+.md:hover,.md.act{fill:var(--map-act)}
+.ml{fill:var(--text2);font-size:8px;font-family:'DM Sans',sans-serif;font-weight:700;pointer-events:none;text-anchor:middle}
+[data-theme="dark"] .ml{fill:var(--text3)}
+.map-panel h3{font-size:18px;font-weight:800;margin-bottom:3px;color:var(--text)}
+.map-sub{font-size:13px;color:var(--text3);margin-bottom:14px}
+.c-list{display:flex;flex-direction:column;gap:9px;max-height:360px;overflow-y:auto}
+.c-list::-webkit-scrollbar{width:4px}
+.c-list::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.c-item{background:var(--card2);border:1px solid var(--border);border-radius:var(--r-md);padding:11px 13px;display:flex;align-items:center;gap:11px;cursor:pointer;transition:border-color .18s}
+.c-item:hover{border-color:var(--accent)}
+.c-info{flex:1;min-width:0}
+.c-name{font-size:13px;font-weight:600;color:var(--text)}
+.c-role{font-size:11px;color:var(--text3)}
+.c-meta{text-align:right}
+.c-rat{font-size:12px;font-weight:700;color:var(--text)}
+.c-avl{font-size:11px;color:var(--green);font-weight:500}
+.c-bsy{font-size:11px;color:var(--text3)}
+.tag{display:inline-block;background:var(--tag-bg);color:var(--tag-txt);font-size:11px;font-weight:600;padding:2px 7px;border-radius:4px}
+
+/* CHAT DEMO */
+.chat-demo{display:grid;grid-template-columns:240px 1fr;background:var(--card);border:1px solid var(--border);border-radius:var(--r-xl);overflow:hidden;height:480px;box-shadow:var(--shadow-md);margin-top:2.5rem}
+.chat-sb{border-right:1px solid var(--border);display:flex;flex-direction:column}
+.chat-sb-hdr{padding:14px 16px;border-bottom:1px solid var(--border)}
+.chat-sb-hdr h4{font-size:15px;font-weight:700;color:var(--text)}
+.conv-item{padding:11px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background .15s;border-bottom:1px solid var(--border)}
+.conv-item:hover{background:var(--card2)}
+.conv-item.act{background:var(--tag-bg)}
+.conv-info{flex:1;min-width:0}
+.conv-name{font-size:13px;font-weight:600;color:var(--text)}
+.conv-prev{font-size:11px;color:var(--text3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.conv-time{font-size:11px;color:var(--text3)}
+.unread-dot{width:18px;height:18px;background:var(--accent);color:#fff;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.chat-main{display:flex;flex-direction:column}
+.chat-hdr{padding:13px 17px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px}
+.chat-hdr-info{flex:1}
+.chat-hdr-name{font-weight:700;font-size:14px;color:var(--text)}
+.chat-hdr-st{font-size:12px;color:var(--green);display:flex;align-items:center;gap:4px}
+.chat-hdr-st.off{color:var(--text3)}
+.chat-msgs{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:9px}
+.chat-msgs::-webkit-scrollbar{width:4px}
+.chat-msgs::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+.msg{display:flex;flex-direction:column;max-width:72%}
+.msg.s{align-self:flex-end;align-items:flex-end}
+.msg.r{align-self:flex-start;align-items:flex-start}
+.bubble{padding:9px 13px;border-radius:15px;font-size:13px;line-height:1.5}
+.msg.s .bubble{background:var(--accent);color:#fff;border-bottom-right-radius:4px}
+.msg.r .bubble{background:var(--card2);color:var(--text);border-bottom-left-radius:4px}
+.msg-meta{display:flex;align-items:center;gap:4px;margin-top:3px}
+.msg-time{font-size:11px;color:var(--text3)}
+.ticks{font-size:11px;color:var(--accent)}
+.ticks.g{color:var(--text3)}
+.fake-img{width:140px;height:90px;background:var(--card2);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:28px;margin-bottom:3px;border:1px solid var(--border)}
+.chat-inp-row{padding:10px 14px;border-top:1px solid var(--border);display:flex;align-items:center;gap:9px}
+.chat-inp{flex:1;background:var(--input);border:1px solid var(--border);border-radius:99px;padding:8px 15px;font-size:13px;color:var(--text);outline:none;transition:border-color .18s}
+.chat-inp:focus{border-color:var(--accent)}
+.chat-inp::placeholder{color:var(--text3)}
+.ic-btn{width:34px;height:34px;border-radius:50%;background:var(--card2);border:1px solid var(--border);color:var(--text2);display:flex;align-items:center;justify-content:center;font-size:16px;cursor:pointer;transition:all .18s;flex-shrink:0}
+.ic-btn:hover{background:var(--accent);color:#fff;border-color:var(--accent)}
+.send-btn{width:34px;height:34px;border-radius:50%;background:var(--accent);border:none;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;flex-shrink:0;transition:background .18s;box-shadow:0 2px 8px rgba(46,125,209,.3)}
+.send-btn:hover{background:var(--accent-dark)}
+
+/* TOOLS */
+.tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:15px;margin-top:2.5rem}
+.tool-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;transition:transform .2s,border-color .2s,box-shadow .2s}
+.tool-card:hover{transform:translateY(-3px);border-color:var(--accent);box-shadow:var(--shadow-md)}
+.tool-img{height:120px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:44px;border-bottom:1px solid var(--border)}
+.tool-body{padding:13px 15px}
+.tool-body h4{font-size:14px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.tool-owner{font-size:12px;color:var(--text3);margin-bottom:10px}
+.tool-foot{display:flex;align-items:center;justify-content:space-between}
+.avail{font-size:11px;font-weight:600;padding:3px 9px;border-radius:99px}
+.avail.yes{background:var(--green-light);color:var(--green)}
+.avail.no{background:var(--card2);color:var(--text3)}
+[data-theme="dark"] .avail.yes{background:#0D3D2A;color:#5DCAA5}
+.req-btn{background:none;border:1px solid var(--accent);color:var(--accent);font-size:11px;font-weight:600;padding:5px 11px;border-radius:var(--r-xs);cursor:pointer;transition:all .18s}
+.req-btn:hover{background:var(--accent);color:#fff}
+.req-btn:disabled{opacity:.4;pointer-events:none}
+.add-tool-btn{display:inline-flex;align-items:center;gap:7px;background:var(--accent);color:#fff;border:none;font-size:13px;font-weight:700;padding:9px 18px;border-radius:var(--r-sm);cursor:pointer;transition:all .18s;box-shadow:0 2px 8px rgba(46,125,209,.3)}
+.add-tool-btn:hover{background:var(--accent-dark);transform:translateY(-1px)}
+
+/* BLOG */
+.blog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:18px;margin-top:2.5rem}
+.blog-card{background:var(--card);border:1px solid var(--border);border-radius:var(--r-lg);overflow:hidden;transition:transform .2s}
+.blog-card:hover{transform:translateY(-3px)}
+.blog-img{height:150px;background:var(--card2);display:flex;align-items:center;justify-content:center;font-size:44px}
+.blog-body{padding:17px 19px}
+.blog-cat{font-size:11px;font-weight:700;letter-spacing:.07em;text-transform:uppercase;color:var(--accent);margin-bottom:7px}
+.blog-body h3{font-size:16px;font-weight:700;margin-bottom:7px;line-height:1.35;color:var(--text)}
+.blog-body p{font-size:13px;color:var(--text2);line-height:1.65;margin-bottom:12px}
+.blog-meta{display:flex;justify-content:space-between;font-size:12px;color:var(--text3)}
+.read-more{color:var(--accent);font-weight:600;cursor:pointer}
+
+/* FAQ */
+.faq-list{max-width:700px;margin:2.5rem auto 0}
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-q{width:100%;background:none;border:none;text-align:left;padding:17px 0;display:flex;justify-content:space-between;align-items:center;font-size:15px;font-weight:600;color:var(--text);cursor:pointer;font-family:inherit;gap:14px}
+.faq-ico{font-size:20px;color:var(--text3);transition:transform .3s;flex-shrink:0}
+.faq-item.open .faq-ico{transform:rotate(45deg)}
+.faq-ans{max-height:0;overflow:hidden;transition:max-height .35s ease}
+.faq-item.open .faq-ans{max-height:200px}
+.faq-ans p{font-size:14px;color:var(--text2);padding-bottom:17px;line-height:1.7}
+
+/* FOOTER */
+footer{background:#090B14;color:rgba(255,255,255,.6);padding:56px 2rem 28px}
+.foot-inner{max-width:1180px;margin:0 auto}
+.foot-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:40px;margin-bottom:40px}
+.foot-logo{font-family:'Syne',sans-serif;font-size:20px;font-weight:800;color:#fff;margin-bottom:10px}
+.foot-logo span{color:var(--accent)}
+.foot-desc{font-size:13px;line-height:1.75;max-width:240px}
+.foot-col h5{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;color:#fff;margin-bottom:13px}
+.foot-col a{display:block;font-size:13px;color:rgba(255,255,255,.45);margin-bottom:7px;transition:color .18s;cursor:pointer}
+.foot-col a:hover{color:#fff}
+.foot-btm{border-top:1px solid rgba(255,255,255,.07);padding-top:22px;display:flex;justify-content:space-between;font-size:12px}
+
+/* MODALS */
+.overlay{display:none;position:fixed;inset:0;z-index:600;background:rgba(0,0,0,.55);backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:1rem}
+.overlay.open{display:flex;animation:fadeIn .2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--card);border:1px solid var(--border);border-radius:var(--r-xl);padding:30px;width:100%;max-width:480px;position:relative;animation:slideUp .25s ease;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg)}
+.modal::-webkit-scrollbar{width:4px}
+.modal::-webkit-scrollbar-thumb{background:var(--border2);border-radius:4px}
+@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.modal-x{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:50%;background:var(--card2);border:1px solid var(--border);color:var(--text2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all .18s}
+.modal-x:hover{color:var(--text)}
+.modal h2{font-size:21px;font-weight:800;margin-bottom:3px;color:var(--text)}
+.modal .m-sub{font-size:13px;color:var(--text3);margin-bottom:20px}
+.field{margin-bottom:11px}
+.field label{display:block;font-size:12px;font-weight:600;color:var(--text2);margin-bottom:5px}
+.field input,.field select,.field textarea{width:100%;padding:9px 13px;border:1.5px solid var(--border2);border-radius:var(--r-sm);background:var(--input);color:var(--text);font-size:14px;outline:none;transition:border-color .18s}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--accent)}
+.field textarea{resize:vertical;min-height:75px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.form-btn{width:100%;padding:12px;border-radius:var(--r-md);font-size:14px;font-weight:700;border:none;cursor:pointer;transition:all .18s;margin-top:4px}
+.form-btn.prim{background:var(--accent);color:#fff;box-shadow:0 3px 10px rgba(46,125,209,.3)}
+.form-btn.prim:hover{background:var(--accent-dark)}
+.form-btn.sec{background:var(--card2);color:var(--text);border:1.5px solid var(--border2)}
+.err{color:var(--red);font-size:13px;margin-bottom:11px;display:none;padding:8px 12px;background:#FFF0F0;border-radius:var(--r-sm)}
+[data-theme="dark"] .err{background:#3D1010}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+.info-box{background:var(--card2);border-radius:var(--r-md);padding:11px 13px}
+.ib-lbl{font-size:11px;color:var(--text3);margin-bottom:2px}
+.ib-val{font-size:14px;font-weight:600;color:var(--text)}
+.review-row{background:var(--card2);border-radius:var(--r-md);padding:10px 13px;margin-bottom:8px}
+.rev-top{display:flex;justify-content:space-between;margin-bottom:3px}
+.rev-name{font-size:13px;font-weight:600;color:var(--text)}
+.rev-txt{font-size:13px;color:var(--text2)}
+.modal-avtr{width:56px;height:56px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
+.modal-hdr{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.modal-hdr h2{font-size:19px}
+.modal-hdr p{font-size:12px;color:var(--text3);margin-top:2px}
+.m-actions{display:flex;gap:9px;margin-top:6px}
+.m-actions button{flex:1;padding:11px;border-radius:var(--r-md);font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all .18s}
+.m-chat-btn{background:var(--accent);color:#fff}
+.m-chat-btn:hover{background:var(--accent-dark)}
+.m-book-btn{background:var(--card2);color:var(--text);border:1.5px solid var(--border2) !important}
+.demo-box{background:var(--card2);border-radius:var(--r-sm);padding:10px 13px;font-size:12px;color:var(--text3);margin-top:12px}
+.demo-box b{color:var(--text2)}
+.toast{position:fixed;bottom:24px;right:24px;z-index:800;background:var(--card);border:1px solid var(--border);border-radius:var(--r-md);padding:13px 16px;display:none;align-items:center;gap:11px;box-shadow:var(--shadow-lg);max-width:310px;animation:slideUp .3s ease}
+.toast.show{display:flex}
+.t-icon{font-size:19px}
+.t-title{font-size:13px;font-weight:600;color:var(--text)}
+.t-sub{font-size:12px;color:var(--text3)}
+
+@media(max-width:900px){
+  .hero-wrap{grid-template-columns:1fr}.hero-visual{display:none}
+  .how-grid{grid-template-columns:1fr}
+  .map-layout{grid-template-columns:1fr}
+  .foot-grid{grid-template-columns:1fr 1fr}
+  .chat-demo{grid-template-columns:1fr}
+  .chat-sb{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo" onclick="goPage('home')">Fix<span>Nest</span> Vienna</div>
+  <div class="nav-links">
+    <a onclick="goPage('home')">Startseite</a>
+    <a onclick="goPage('home');scrollTo('map-anchor')">Bezirkskarte</a>
+    <a onclick="goPage('tools')">Werkzeug leihen</a>
+    <a onclick="goPage('blog')">Blog</a>
+    <a onclick="goPage('home');scrollTo('faq-anchor')">FAQ</a>
+    <a id="chatLink" style="display:none" onclick="goPage('chat')">💬 Chat</a>
+  </div>
+  <div class="nav-right">
+    <div class="tog-wrap">
+      <span class="tog-lbl">DE</span>
+      <label class="ios-tog"><input type="checkbox" onchange="setTheme(this.checked)"><span class="ios-slider"></span></label>
+      <span class="tog-lbl">EN</span>
+    </div>
+    <div class="tog-wrap">
+      <span class="tog-lbl">☀</span>
+      <label class="ios-tog"><input type="checkbox" onchange="setDark(this.checked)"><span class="ios-slider"></span></label>
+      <span class="tog-lbl">🌙</span>
+    </div>
+    <button class="btn-ghost" id="loginBtn" onclick="openM('authM');showTab('login')">Anmelden</button>
+    <button class="btn-primary" id="registerBtn" onclick="openM('authM');showTab('register')">Registrieren</button>
+    <button class="user-menu-btn" id="userBtn" onclick="openM('authM');showTab('profile')">
+      <div class="user-av-sm" id="uAvSm">?</div>
+      <span id="uName">–</span> ▾
+    </button>
+  </div>
+</nav>
+
+
+<!-- HOME PAGE -->
+<div class="page active" id="page-home">
+  <div class="hero-wrap">
+    <div class="hero">
+      <div class="hero-badge">📍 Wien, Österreich</div>
+      <h1>Dein <em>lokaler</em> Partner für Heimreparaturen</h1>
+      <p>Finde Handwerker in deinem Bezirk oder leihe Werkzeug von Nachbarn – schnell, einfach, zuverlässig.</p>
+      <div class="hero-btns">
+        <button class="btn-lg primary" onclick="goPage('home');scrollTo('map-anchor')">Handwerker finden</button>
+        <button class="btn-lg outline" onclick="goPage('tools')">Werkzeug leihen</button>
+      </div>
+      <div class="hero-stats">
+        <div><div class="stat-num">23</div><div class="stat-lbl">Bezirke</div></div>
+        <div><div class="stat-num">340+</div><div class="stat-lbl">Handwerker</div></div>
+        <div><div class="stat-num">1.2k</div><div class="stat-lbl">Werkzeuge</div></div>
+      </div>
+    </div>
+    <div class="hero-visual">
+      <div class="hero-mini-grid">
+        <div class="mini-card"><div class="mini-icon">🔧</div><h4>Handwerker</h4><p>Geprüfte Fachleute in deinem Bezirk</p></div>
+        <div class="mini-card"><div class="mini-icon">🪛</div><h4>Werkzeug leihen</h4><p>Von Nachbarn, kostenlos & unkompliziert</p></div>
+      </div>
+      <div class="craft-row" onclick="openCraft('Martin Kaufmann','MK','Klempner','1010 Wien','4.9','#2E7DD1',true)">
+        <div class="av" style="background:#2E7DD1">MK</div>
+        <div class="craft-info"><div class="craft-name">Martin Kaufmann</div><div class="craft-role">Klempner · 1010 Wien</div><div class="stars">★★★★★ 4.9</div></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+          <div style="display:flex;align-items:center;gap:5px"><div class="sdot"></div><span class="stxt">Online</span></div>
+          <button class="mini-pb">Profil</button>
+        </div>
+      </div>
+      <div class="craft-row" onclick="openCraft('Sandra Fischer','SF','Elektrikerin','1030 Wien','4.6','#18A16A',false)">
+        <div class="av" style="background:#18A16A">SF</div>
+        <div class="craft-info"><div class="craft-name">Sandra Fischer</div><div class="craft-role">Elektrikerin · 1030 Wien</div><div class="stars">★★★★☆ 4.6</div></div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+          <div style="display:flex;align-items:center;gap:5px"><div class="sdot off"></div><span class="stxt off">Offline</span></div>
+          <button class="mini-pb">Profil</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="section">
+    <div class="sec-inner">
+      <div class="sec-label">So funktioniert es</div>
+      <h2 class="sec-title">In 3 Schritten zur Lösung</h2>
+      <p class="sec-sub">Egal ob du Hilfe brauchst oder Werkzeug leihen möchtest – FixNest macht es einfach.</p>
+      <div class="how-grid">
+        <div class="how-card"><div class="how-num">01</div><div class="how-icon">📍</div><h3>Bezirk wählen</h3><p>Wähle deinen Wiener Bezirk und filtere nach Kategorie: Klempner, Elektriker, Tischler und mehr.</p></div>
+        <div class="how-card"><div class="how-num">02</div><div class="how-icon">👤</div><h3>Profil ansehen</h3><p>Bewertungen, Verfügbarkeit und Qualifikationen – alles auf einem Blick direkt auf der Karte.</p></div>
+        <div class="how-card"><div class="how-num">03</div><div class="how-icon">💬</div><h3>Kontakt aufnehmen</h3><p>Chatte direkt mit dem Handwerker, sende Bilder und buche einen Termin – alles auf einer Plattform.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAP -->
+  <div class="section alt" id="map-anchor">
+    <div class="sec-inner">
+      <div class="sec-label">Bezirkskarte Wien</div>
+      <h2 class="sec-title">Handwerker in deinem Bezirk</h2>
+      <div class="filter-row">
+        <button class="pill active" onclick="setPill(this)">Alle</button>
+        <button class="pill" onclick="setPill(this)">Klempner</button>
+        <button class="pill" onclick="setPill(this)">Elektriker</button>
+        <button class="pill" onclick="setPill(this)">Tischler</button>
+        <button class="pill" onclick="setPill(this)">Maler</button>
+      </div>
+      <div class="map-layout">
+        <div class="map-svg-wrap">
+          <svg viewBox="0 0 500 360" xmlns="http://www.w3.org/2000/svg">
+            <rect class="md" x="10" y="155" width="70" height="55" rx="4" onclick="selD(this,'13., Hietzing','2 Handwerker')"/><text class="ml" x="45" y="180">13.</text>
+            <rect class="md" x="85" y="155" width="65" height="55" rx="4" onclick="selD(this,'12., Meidling','3 Handwerker')"/><text class="ml" x="118" y="180">12.</text>
+            <rect class="md" x="155" y="155" width="60" height="55" rx="4" onclick="selD(this,'5., Margareten','3 Handwerker')"/><text class="ml" x="185" y="180">5.</text>
+            <rect class="md act" x="220" y="130" width="65" height="80" rx="4" onclick="selD(this,'1., Innere Stadt','3 Handwerker')"/><text class="ml" x="252" y="168">1.</text>
+            <rect class="md" x="290" y="130" width="65" height="55" rx="4" onclick="selD(this,'3., Landstraße','4 Handwerker')"/><text class="ml" x="322" y="155">3.</text>
+            <rect class="md" x="360" y="130" width="70" height="55" rx="4" onclick="selD(this,'11., Simmering','4 Handwerker')"/><text class="ml" x="395" y="155">11.</text>
+            <rect class="md" x="155" y="90" width="60" height="60" rx="4" onclick="selD(this,'6., Mariahilf','2 Handwerker')"/><text class="ml" x="185" y="118">6.</text>
+            <rect class="md" x="155" y="50" width="60" height="35" rx="4" onclick="selD(this,'7., Neubau','1 Handwerker')"/><text class="ml" x="185" y="70">7.</text>
+            <rect class="md" x="220" y="50" width="65" height="75" rx="4" onclick="selD(this,'8., Josefstadt','2 Handwerker')"/><text class="ml" x="252" y="90">8.</text>
+            <rect class="md" x="290" y="50" width="65" height="75" rx="4" onclick="selD(this,'9., Alsergrund','3 Handwerker')"/><text class="ml" x="322" y="90">9.</text>
+            <rect class="md" x="360" y="50" width="70" height="75" rx="4" onclick="selD(this,'2., Leopoldstadt','5 Handwerker')"/><text class="ml" x="395" y="90">2.</text>
+            <rect class="md" x="85" y="50" width="65" height="100" rx="4" onclick="selD(this,'15., Rudolfsheim','4 Handwerker')"/><text class="ml" x="118" y="100">15.</text>
+            <rect class="md" x="10" y="50" width="70" height="100" rx="4" onclick="selD(this,'16., Ottakring','5 Handwerker')"/><text class="ml" x="45" y="100">16.</text>
+            <rect class="md" x="220" y="215" width="65" height="55" rx="4" onclick="selD(this,'4., Wieden','2 Handwerker')"/><text class="ml" x="252" y="240">4.</text>
+            <rect class="md" x="290" y="190" width="65" height="55" rx="4" onclick="selD(this,'10., Favoriten','6 Handwerker')"/><text class="ml" x="322" y="215">10.</text>
+            <rect class="md" x="360" y="190" width="70" height="55" rx="4" onclick="selD(this,'23., Liesing','3 Handwerker')"/><text class="ml" x="395" y="215">23.</text>
+            <rect class="md" x="85" y="215" width="65" height="55" rx="4" onclick="selD(this,'14., Penzing','3 Handwerker')"/><text class="ml" x="118" y="240">14.</text>
+            <rect class="md" x="10" y="215" width="70" height="55" rx="4" onclick="selD(this,'18., Währing','2 Handwerker')"/><text class="ml" x="45" y="240">18.</text>
+            <rect class="md" x="155" y="215" width="60" height="55" rx="4" onclick="selD(this,'17., Hernals','2 Handwerker')"/><text class="ml" x="185" y="240">17.</text>
+            <rect class="md" x="10" y="10" width="160" height="35" rx="4" onclick="selD(this,'19., Döbling','3 Handwerker')"/><text class="ml" x="90" y="30">19.</text>
+            <rect class="md" x="175" y="10" width="150" height="35" rx="4" onclick="selD(this,'21., Floridsdorf','4 Handwerker')"/><text class="ml" x="250" y="30">21.</text>
+            <rect class="md" x="330" y="10" width="100" height="35" rx="4" onclick="selD(this,'22., Donaustadt','5 Handwerker')"/><text class="ml" x="380" y="30">22.</text>
+            <rect class="md" x="220" y="275" width="140" height="45" rx="4" onclick="selD(this,'20., Brigittenau','3 Handwerker')"/><text class="ml" x="290" y="300">20.</text>
+            <rect class="md" x="10" y="275" width="205" height="45" rx="4" onclick="selD(this,'Favoriten Süd','2 Handwerker')"/><text class="ml" x="112" y="300">Fav. Süd</text>
+            <circle cx="252" cy="168" r="5" fill="#2E7DD1" opacity=".9"/>
+            <circle cx="322" cy="155" r="4" fill="#18A16A" opacity=".9"/>
+            <circle cx="118" cy="100" r="4" fill="#F0A500" opacity=".9"/>
+          </svg>
+        </div>
+        <div class="map-panel">
+          <h3 id="dName">1., Innere Stadt</h3>
+          <div class="map-sub" id="dSub">3 Handwerker verfügbar</div>
+          <div class="c-list">
+            <div class="c-item" onclick="openCraft('Martin Kaufmann','MK','Klempner','1010 Wien','4.9','#2E7DD1',true)">
+              <div class="av" style="width:34px;height:34px;font-size:12px;background:#2E7DD1">MK</div>
+              <div class="c-info"><div class="c-name">Martin Kaufmann</div><div class="c-role"><span class="tag">Klempner</span></div></div>
+              <div class="c-meta"><div class="c-rat">★ 4.9</div><div class="c-avl">Verfügbar</div></div>
+            </div>
+            <div class="c-item" onclick="openCraft('Anna Huber','AH','Malerin','1010 Wien','4.7','#7C5ABF',true)">
+              <div class="av" style="width:34px;height:34px;font-size:12px;background:#7C5ABF">AH</div>
+              <div class="c-info"><div class="c-name">Anna Huber</div><div class="c-role"><span class="tag">Malerin</span></div></div>
+              <div class="c-meta"><div class="c-rat">★ 4.7</div><div class="c-avl">Verfügbar</div></div>
+            </div>
+            <div class="c-item" onclick="openCraft('Josef Berger','JB','Elektriker','1010 Wien','4.5','#C05A20',false)">
+              <div class="av" style="width:34px;height:34px;font-size:12px;background:#C05A20">JB</div>
+              <div class="c-info"><div class="c-name">Josef Berger</div><div class="c-role"><span class="tag">Elektriker</span></div></div>
+              <div class="c-meta"><div class="c-rat">★ 4.5</div><div class="c-bsy">Beschäftigt</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CHAT DEMO -->
+  <div class="section">
+    <div class="sec-inner">
+      <div class="sec-label">Direkte Kommunikation</div>
+      <h2 class="sec-title">Chat mit deinem Handwerker</h2>
+      <p class="sec-sub">Nachrichten, Bilder, Online-Status und Lesebestätigungen – alles wie du es kennst.</p>
+      <div class="chat-demo">
+        <div class="chat-sb">
+          <div class="chat-sb-hdr"><h4>Nachrichten</h4></div>
+          <div class="conv-item act" onclick="swConv(this,'Martin Kaufmann','MK','#2E7DD1',true)">
+            <div class="av" style="width:34px;height:34px;font-size:12px;background:#2E7DD1">MK</div>
+            <div class="conv-info"><div class="conv-name">Martin Kaufmann</div><div class="conv-prev">Ich komme morgen um 10 Uhr</div></div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="conv-time">10:32</span><div class="unread-dot">2</div></div>
+          </div>
+          <div class="conv-item" onclick="swConv(this,'Sandra Fischer','SF','#18A16A',false)">
+            <div class="av" style="width:34px;height:34px;font-size:12px;background:#18A16A">SF</div>
+            <div class="conv-info"><div class="conv-name">Sandra Fischer</div><div class="conv-prev">Danke für die Bewertung!</div></div>
+            <div><span class="conv-time">Ges.</span></div>
+          </div>
+          <div class="conv-item" onclick="swConv(this,'Josef Berger','JB','#C05A20',false)">
+            <div class="av" style="width:34px;height:34px;font-size:12px;background:#C05A20">JB</div>
+            <div class="conv-info"><div class="conv-name">Josef Berger</div><div class="conv-prev">Haben Sie ein Foto?</div></div>
+            <div><span class="conv-time">Mo.</span></div>
+          </div>
+        </div>
+        <div class="chat-main">
+          <div class="chat-hdr">
+            <div class="av" id="cAv" style="width:36px;height:36px;font-size:13px;background:#2E7DD1">MK</div>
+            <div class="chat-hdr-info">
+              <div class="chat-hdr-name" id="cName">Martin Kaufmann</div>
+              <div class="chat-hdr-st" id="cSt"><div class="sdot" id="cDot"></div><span id="cStTxt">Online</span></div>
+            </div>
+            <button class="mini-pb" onclick="openCraft('Martin Kaufmann','MK','Klempner','1010 Wien','4.9','#2E7DD1',true)">Profil</button>
+          </div>
+          <div class="chat-msgs" id="chatMsgs">
+            <div class="msg r"><div class="bubble">Hallo! Wie kann ich Ihnen helfen?</div><div class="msg-meta"><span class="msg-time">10:15</span></div></div>
+            <div class="msg s"><div class="bubble">Guten Tag! Ich habe ein Problem mit meinem Wasserhahn.</div><div class="msg-meta"><span class="msg-time">10:17</span><span class="ticks g">✓✓</span></div></div>
+            <div class="msg s"><div class="fake-img">🚰</div><div class="bubble" style="font-size:12px;border-radius:4px 15px 15px 15px">Hier ist ein Foto davon.</div><div class="msg-meta"><span class="msg-time">10:18</span><span class="ticks">✓✓</span></div></div>
+            <div class="msg r"><div class="bubble">Ich sehe das Problem! Das ist die Dichtung. Ich komme morgen um 10 Uhr zu Ihnen.</div><div class="msg-meta"><span class="msg-time">10:32</span></div></div>
+          </div>
+          <div class="chat-inp-row">
+            <button class="ic-btn" onclick="sendImg('chatMsgs')">📎</button>
+            <input class="chat-inp" id="cInp" placeholder="Nachricht schreiben..." onkeydown="if(event.key==='Enter')sendMsg('chatMsgs','cInp')">
+            <button class="send-btn" onclick="sendMsg('chatMsgs','cInp')">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BLOG PREVIEW -->
+  <div class="section alt">
+    <div class="sec-inner">
+      <div class="sec-label">Tipps & Wissen</div>
+      <h2 class="sec-title">Ratgeber für dein Zuhause</h2>
+      <div class="blog-grid">
+        <div class="blog-card"><div class="blog-img">🚰</div><div class="blog-body"><div class="blog-cat">Klempner</div><h3>Tropfender Wasserhahn: selbst reparieren?</h3><p>Wann du es selbst schaffen kannst und wann ein Profi nötig ist.</p><div class="blog-meta"><span>12. Mai 2026</span><span class="read-more" onclick="goPage('blog')">Weiterlesen →</span></div></div></div>
+        <div class="blog-card"><div class="blog-img">⚡</div><div class="blog-body"><div class="blog-cat">Elektrik</div><h3>5 Elektrikfehler zuhause vermeiden</h3><p>Sicherheit geht vor – diese Fehler können gefährlich werden.</p><div class="blog-meta"><span>5. Mai 2026</span><span class="read-more" onclick="goPage('blog')">Weiterlesen →</span></div></div></div>
+        <div class="blog-card"><div class="blog-img">🪛</div><div class="blog-body"><div class="blog-cat">Community</div><h3>Werkzeug teilen spart Geld</h3><p>Wie das Tool-Sharing Wiens Bezirke vernetzt und die Gemeinschaft stärkt.</p><div class="blog-meta"><span>28. Apr. 2026</span><span class="read-more" onclick="goPage('blog')">Weiterlesen →</span></div></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="section" id="faq-anchor">
+    <div class="sec-inner">
+      <div class="sec-label">Häufige Fragen</div>
+      <h2 class="sec-title" style="text-align:center">Wir haben die Antworten</h2>
+      <div class="faq-list">
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span>Ist FixNest kostenlos nutzbar?</span><span class="faq-ico">+</span></button><div class="faq-ans"><p>Ja! Für Privatpersonen ist FixNest komplett kostenlos – Handwerker suchen, Werkzeug leihen und chatten ist ohne Kosten möglich.</p></div></div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span>Wie werden Handwerker überprüft?</span><span class="faq-ico">+</span></button><div class="faq-ans"><p>Handwerker müssen bei der Registrierung Qualifikationsnachweise hochladen. Verifizierte Profile erhalten ein blaues Badge.</p></div></div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span>Was passiert wenn ein Werkzeug beschädigt wird?</span><span class="faq-ico">+</span></button><div class="faq-ans"><p>Beide Parteien können Bedingungen im Chat festhalten. Wir empfehlen, den Zustand per Foto zu dokumentieren.</p></div></div>
+        <div class="faq-item"><button class="faq-q" onclick="toggleFaq(this)"><span>In welchen Bezirken ist FixNest verfügbar?</span><span class="faq-ico">+</span></button><div class="faq-ans"><p>FixNest ist in allen 23 Wiener Bezirken verfügbar. Die Karte zeigt dir wo die meisten Handwerker aktiv sind.</p></div></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="foot-inner">
+      <div class="foot-grid">
+        <div><div class="foot-logo">Fix<span>Nest</span> Vienna</div><p class="foot-desc">Deine lokale Plattform für Handwerker und Werkzeug-Sharing in Wien. Schnell, einfach, nachbarschaftlich.</p></div>
+        <div class="foot-col"><h5>Plattform</h5><a onclick="goPage('home')">Startseite</a><a onclick="goPage('tools')">Werkzeug leihen</a><a onclick="goPage('chat')">Nachrichten</a><a onclick="goPage('blog')">Blog</a></div>
+        <div class="foot-col"><h5>Rechtliches</h5><a>Datenschutz</a><a>Impressum</a><a>AGB</a><a>Cookies</a></div>
+        <div class="foot-col"><h5>Social</h5><a>Instagram</a><a>Facebook</a><a>LinkedIn</a></div>
+      </div>
+      <div class="foot-btm"><span>© 2026 FixNest Vienna · FH Technikum Wien · ITP-Projekt SS2026</span><span style="color:rgba(255,255,255,.25)">Made with ❤ in Wien</span></div>
+    </div>
+  </footer>
+</div>
+
+<!-- TOOLS PAGE -->
+<div class="page" id="page-tools">
+  <div style="background:var(--card);border-bottom:1px solid var(--border);padding:22px 2rem;display:flex;align-items:center;justify-content:space-between">
+    <div><h2 style="font-size:22px;font-weight:800;color:var(--text)">Werkzeug leihen</h2><p style="font-size:13px;color:var(--text2);margin-top:2px">Von Nachbarn, für Nachbarn – kostenlos in deinem Bezirk</p></div>
+    <button class="add-tool-btn" onclick="tryAdd()">+ Werkzeug einstellen</button>
+  </div>
+  <div style="max-width:1180px;margin:0 auto;padding:28px 2rem">
+    <div class="filter-row">
+      <button class="pill active" onclick="setPill(this)">Alle</button>
+      <button class="pill" onclick="setPill(this)">Elektrowerkzeug</button>
+      <button class="pill" onclick="setPill(this)">Handwerkzeug</button>
+      <button class="pill" onclick="setPill(this)">Leitern</button>
+      <select style="background:var(--input);border:1px solid var(--border2);color:var(--text);font-size:12px;padding:5px 12px;border-radius:99px;outline:none">
+        <option>Alle Bezirke</option><option>1. Bezirk</option><option>2. Bezirk</option><option>3. Bezirk</option><option>5. Bezirk</option><option>10. Bezirk</option>
+      </select>
+    </div>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="tool-img">🪚</div><div class="tool-body"><h4>Kreissäge</h4><div class="tool-owner">👤 Klaus M. · 1010 Wien</div><div class="tool-foot"><span class="avail yes">Verfügbar</span><button class="req-btn" onclick="reqT(this,'Kreissäge')">Anfragen</button></div></div></div>
+      <div class="tool-card"><div class="tool-img">🔨</div><div class="tool-body"><h4>Bohrhammer</h4><div class="tool-owner">👤 Maria T. · 1030 Wien</div><div class="tool-foot"><span class="avail yes">Verfügbar</span><button class="req-btn" onclick="reqT(this,'Bohrhammer')">Anfragen</button></div></div></div>
+      <div class="tool-card"><div class="tool-img">🪜</div><div class="tool-body"><h4>Leiter 3m</h4><div class="tool-owner">👤 Peter K. · 1080 Wien</div><div class="tool-foot"><span class="avail no">Verliehen bis Fr.</span><button class="req-btn" disabled>Anfragen</button></div></div></div>
+      <div class="tool-card"><div class="tool-img">🔧</div><div class="tool-body"><h4>Schraubenset</h4><div class="tool-owner">👤 Lena W. · 1050 Wien</div><div class="tool-foot"><span class="avail yes">Verfügbar</span><button class="req-btn" onclick="reqT(this,'Schraubenset')">Anfragen</button></div></div></div>
+      <div class="tool-card"><div class="tool-img">🪣</div><div class="tool-body"><h4>Hochdruckreiniger</h4><div class="tool-owner">👤 Stefan H. · 1090 Wien</div><div class="tool-foot"><span class="avail yes">Verfügbar</span><button class="req-btn" onclick="reqT(this,'Hochdruckreiniger')">Anfragen</button></div></div></div>
+      <div class="tool-card"><div class="tool-img">🔩</div><div class="tool-body"><h4>Schweißgerät</h4><div class="tool-owner">👤 Marta B. · 1020 Wien</div><div class="tool-foot"><span class="avail no">Verliehen</span><button class="req-btn" disabled>Anfragen</button></div></div></div>
+      <div class="tool-card"><div class="tool-img">🪤</div><div class="tool-body"><h4>Wasserwaage</h4><div class="tool-owner">👤 Ali K. · 1060 Wien</div><div class="tool-foot"><span class="avail yes">Verfügbar</span><button class="req-btn" onclick="reqT(this,'Wasserwaage')">Anfragen</button></div></div></div>
+      <div class="tool-card"><div class="tool-img">🔌</div><div class="tool-body"><h4>Verlängerungskabel 20m</h4><div class="tool-owner">👤 Nina P. · 1070 Wien</div><div class="tool-foot"><span class="avail yes">Verfügbar</span><button class="req-btn" onclick="reqT(this,'Verlängerungskabel')">Anfragen</button></div></div></div>
+    </div>
+    <div id="myToolsSec" style="display:none;margin-top:32px">
+      <h3 style="font-size:18px;font-weight:700;margin-bottom:14px;color:var(--text)">Meine eingestellten Werkzeuge</h3>
+      <div class="tools-grid" id="myToolsGrid"></div>
+    </div>
+  </div>
+</div>
+
+<!-- BLOG PAGE -->
+<div class="page" id="page-blog">
+  <div class="section"><div class="sec-inner">
+    <div class="sec-label">Blog</div>
+    <h2 class="sec-title">Tipps & Ratgeber</h2>
+    <div class="blog-grid">
+      <div class="blog-card"><div class="blog-img">🚰</div><div class="blog-body"><div class="blog-cat">Klempner</div><h3>Tropfender Wasserhahn: selbst reparieren?</h3><p>Wir erklären, wann du es selbst schaffen kannst und wann ein Klempner nötig ist.</p><div class="blog-meta"><span>12. Mai 2026</span><span class="read-more">Weiterlesen →</span></div></div></div>
+      <div class="blog-card"><div class="blog-img">⚡</div><div class="blog-body"><div class="blog-cat">Elektrik</div><h3>5 Elektrikfehler zuhause vermeiden</h3><p>Sicherheit geht vor – diese Fehler können gefährlich werden.</p><div class="blog-meta"><span>5. Mai 2026</span><span class="read-more">Weiterlesen →</span></div></div></div>
+      <div class="blog-card"><div class="blog-img">🪛</div><div class="blog-body"><div class="blog-cat">Community</div><h3>Werkzeug teilen spart Geld</h3><p>Wie das Tool-Sharing Wiens Bezirke vernetzt.</p><div class="blog-meta"><span>28. Apr. 2026</span><span class="read-more">Weiterlesen →</span></div></div></div>
+      <div class="blog-card"><div class="blog-img">🪟</div><div class="blog-body"><div class="blog-cat">Renovierung</div><h3>Fenster abdichten im Winter</h3><p>So sparst du Heizkosten durch einfache Maßnahmen.</p><div class="blog-meta"><span>20. Apr. 2026</span><span class="read-more">Weiterlesen →</span></div></div></div>
+      <div class="blog-card"><div class="blog-img">🎨</div><div class="blog-body"><div class="blog-cat">Maler</div><h3>Richtig streichen: Profi-Tipps</h3><p>Mit diesen Tipps gelingt der Anstrich auch ohne Erfahrung.</p><div class="blog-meta"><span>15. Apr. 2026</span><span class="read-more">Weiterlesen →</span></div></div></div>
+      <div class="blog-card"><div class="blog-img">🏠</div><div class="blog-body"><div class="blog-cat">Allgemein</div><h3>Was darf man selbst renovieren?</h3><p>Ein Überblick über Arbeiten die Profis erfordern.</p><div class="blog-meta"><span>8. Apr. 2026</span><span class="read-more">Weiterlesen →</span></div></div></div>
+    </div>
+  </div></div>
+</div>
+
+<!-- CHAT PAGE -->
+<div class="page" id="page-chat">
+  <div style="max-width:1100px;margin:0 auto;padding:32px 2rem">
+    <div id="chatGuest" style="text-align:center;padding:80px 24px;color:var(--text3)">
+      <div style="font-size:52px;margin-bottom:14px">💬</div>
+      <h3 style="font-size:20px;font-weight:700;margin-bottom:8px;color:var(--text)">Bitte zuerst anmelden</h3>
+      <p style="margin-bottom:20px">Um den Chat zu nutzen, benötigst du ein Konto.</p>
+      <button class="btn-primary" onclick="openM('authM');showTab('login')" style="font-size:14px;padding:10px 24px">Jetzt anmelden</button>
+    </div>
+    <div id="chatUser" style="display:none">
+      <h2 style="font-size:22px;font-weight:800;margin-bottom:18px;color:var(--text)">Meine Nachrichten</h2>
+      <div class="chat-demo" style="height:520px">
+        <div class="chat-sb">
+          <div class="chat-sb-hdr"><h4>Konversationen</h4></div>
+          <div id="fcList"></div>
+        </div>
+        <div class="chat-main">
+          <div class="chat-hdr">
+            <div class="av" id="fcAv" style="width:36px;height:36px;font-size:13px;background:#2E7DD1">MK</div>
+            <div class="chat-hdr-info"><div class="chat-hdr-name" id="fcName">Martin Kaufmann</div><div class="chat-hdr-st"><div class="sdot"></div><span>Online</span></div></div>
+          </div>
+          <div class="chat-msgs" id="fcMsgs">
+            <div class="msg r"><div class="bubble">Hallo! Wie kann ich Ihnen helfen?</div><div class="msg-meta"><span class="msg-time">10:15</span></div></div>
+            <div class="msg s"><div class="bubble">Guten Tag! Ich habe ein Problem mit meinem Wasserhahn.</div><div class="msg-meta"><span class="msg-time">10:17</span><span class="ticks">✓✓</span></div></div>
+          </div>
+          <div class="chat-inp-row">
+            <button class="ic-btn" onclick="sendImg('fcMsgs')">📎</button>
+            <input class="chat-inp" id="fcInp" placeholder="Nachricht schreiben..." onkeydown="if(event.key==='Enter')sendMsg('fcMsgs','fcInp')">
+            <button class="send-btn" onclick="sendMsg('fcMsgs','fcInp')">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AUTH MODAL -->
+<div class="overlay" id="authM" onclick="bgC(event,'authM')">
+  <div class="modal" style="max-width:400px">
+    <button class="modal-x" onclick="closeM('authM')">✕</button>
+    <div id="tabLogin">
+      <h2>Willkommen zurück</h2><p class="m-sub">Melde dich bei FixNest an</p>
+      <div class="field"><label>E-Mail</label><input type="email" id="liE" placeholder="name@example.com"></div>
+      <div class="field"><label>Passwort</label><input type="password" id="liP" placeholder="••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <div class="err" id="liErr"></div>
+      <button class="form-btn prim" onclick="doLogin()">Anmelden</button>
+      <p style="text-align:center;font-size:13px;color:var(--text3);margin-top:13px">Noch kein Konto? <a onclick="showTab('register')" style="color:var(--accent);cursor:pointer;font-weight:600">Registrieren</a></p>
+      <div class="demo-box"><b>Demo:</b> test@fixnest.at &nbsp;·&nbsp; Passwort: 1234</div>
+    </div>
+    <div id="tabRegister" style="display:none">
+      <h2>Konto erstellen</h2><p class="m-sub">Tritt FixNest Vienna bei</p>
+      <div class="field-row">
+        <div class="field"><label>Vorname</label><input type="text" id="rF" placeholder="Max"></div>
+        <div class="field"><label>Nachname</label><input type="text" id="rL" placeholder="Mustermann"></div>
+      </div>
+      <div class="field"><label>E-Mail</label><input type="email" id="rE" placeholder="name@example.com"></div>
+      <div class="field"><label>Passwort</label><input type="password" id="rP" placeholder="Mindestens 6 Zeichen"></div>
+      <div class="field-row">
+        <div class="field"><label>Ich bin...</label><select id="rRole"><option value="customer">Kunde</option><option value="craftsman">Handwerker</option></select></div>
+        <div class="field"><label>Bezirk</label>
+          <select id="rDist"><option value="">Wählen...</option>
+            <option>1. Bezirk</option><option>2. Bezirk</option><option>3. Bezirk</option><option>4. Bezirk</option><option>5. Bezirk</option>
+            <option>6. Bezirk</option><option>7. Bezirk</option><option>8. Bezirk</option><option>9. Bezirk</option><option>10. Bezirk</option>
+            <option>11. Bezirk</option><option>12. Bezirk</option><option>13. Bezirk</option><option>14. Bezirk</option><option>15. Bezirk</option>
+            <option>16. Bezirk</option><option>17. Bezirk</option><option>18. Bezirk</option><option>19. Bezirk</option><option>20. Bezirk</option>
+            <option>21. Bezirk</option><option>22. Bezirk</option><option>23. Bezirk</option>
+          </select>
+        </div>
+      </div>
+      <div class="err" id="rErr"></div>
+      <button class="form-btn prim" onclick="doReg()">Registrieren</button>
+      <p style="text-align:center;font-size:13px;color:var(--text3);margin-top:13px">Bereits ein Konto? <a onclick="showTab('login')" style="color:var(--accent);cursor:pointer;font-weight:600">Anmelden</a></p>
+    </div>
+    <div id="tabProfile" style="display:none;text-align:center">
+      <div class="av" id="pAv" style="width:60px;height:60px;font-size:20px;background:var(--accent);margin:0 auto 12px">?</div>
+      <h2 id="pName" style="text-align:center">–</h2>
+      <p class="m-sub" id="pRole" style="text-align:center">–</p>
+      <div class="info-grid" style="margin-top:16px;text-align:left">
+        <div class="info-box"><div class="ib-lbl">Bezirk</div><div class="ib-val" id="pDist">–</div></div>
+        <div class="info-box"><div class="ib-lbl">Mitglied seit</div><div class="ib-val" id="pSince">–</div></div>
+      </div>
+      <button class="form-btn prim" onclick="goPage('chat');closeM('authM')" style="margin-bottom:8px">Meine Nachrichten</button>
+      <button class="form-btn sec" onclick="doLogout()">Abmelden</button>
+    </div>
+  </div>
+</div>
+
+<!-- CRAFTSMAN MODAL -->
+<div class="overlay" id="craftM" onclick="bgC(event,'craftM')">
+  <div class="modal">
+    <button class="modal-x" onclick="closeM('craftM')">✕</button>
+    <div class="modal-hdr">
+      <div class="modal-avtr" id="mAv">MK</div>
+      <div><h2 id="mName">–</h2><p id="mRole" style="font-size:13px;color:var(--text3)">–</p>
+        <div style="display:flex;align-items:center;gap:5px;margin-top:4px"><div class="sdot" id="mDot"></div><span id="mSt" style="font-size:12px;font-weight:600;color:var(--green)">Online</span></div>
+      </div>
+    </div>
+    <div class="info-grid">
+      <div class="info-box"><div class="ib-lbl">Bewertung</div><div class="ib-val" id="mRat">★ –</div></div>
+      <div class="info-box"><div class="ib-lbl">Bezirk</div><div class="ib-val" id="mDist">–</div></div>
+      <div class="info-box"><div class="ib-lbl">Aufträge</div><div class="ib-val">127</div></div>
+      <div class="info-box"><div class="ib-lbl">Reaktionszeit</div><div class="ib-val">~15 Min.</div></div>
+    </div>
+    <div style="margin-bottom:16px">
+      <h4 style="font-size:14px;font-weight:700;margin-bottom:10px;color:var(--text)">Kundenbewertungen</h4>
+      <div class="review-row"><div class="rev-top"><span class="rev-name">Lisa M.</span><span class="stars">★★★★★</span></div><div class="rev-txt">Super schnell und professionell! Wasserhahn in 20 Min. repariert.</div></div>
+      <div class="review-row"><div class="rev-top"><span class="rev-name">Thomas B.</span><span class="stars">★★★★★</span></div><div class="rev-txt">Sehr freundlich und pünktlich. Kann ich nur empfehlen.</div></div>
+    </div>
+    <div class="m-actions">
+      <button class="m-chat-btn" onclick="startChat()">💬 Nachricht senden</button>
+      <button class="m-book-btn" onclick="doBook()">📅 Termin buchen</button>
+    </div>
+  </div>
+</div>
+
+<!-- BOOKING MODAL -->
+<div class="overlay" id="bookM" onclick="bgC(event,'bookM')">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-x" onclick="closeM('bookM')">✕</button>
+    <h2>Termin buchen</h2><p class="m-sub" id="bookFor">–</p>
+    <div class="field"><label>Problem beschreiben</label><textarea id="bDesc" placeholder="z.B. Wasserhahn tropft in der Küche..."></textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Datum & Uhrzeit</label><input type="datetime-local" id="bDate"></div>
+      <div class="field"><label>Bezirk</label><select id="bDist"><option>1. Bezirk</option><option>2. Bezirk</option><option>3. Bezirk</option><option>5. Bezirk</option></select></div>
+    </div>
+    <div class="field"><label>Adresse</label><input type="text" id="bAddr" placeholder="Straße, Hausnummer"></div>
+    <button class="form-btn prim" onclick="confirmBook()">Anfrage senden</button>
+  </div>
+</div>
+
+<!-- ADD TOOL MODAL -->
+<div class="overlay" id="addToolM" onclick="bgC(event,'addToolM')">
+  <div class="modal" style="max-width:420px">
+    <button class="modal-x" onclick="closeM('addToolM')">✕</button>
+    <h2>Werkzeug einstellen</h2><p class="m-sub">Stelle dein Werkzeug Nachbarn zur Verfügung</p>
+    <div class="field"><label>Name</label><input type="text" id="tN" placeholder="z.B. Bohrhammer Bosch"></div>
+    <div class="field"><label>Beschreibung</label><textarea id="tD" placeholder="Marke, Zustand, Besonderheiten..."></textarea></div>
+    <div class="field-row">
+      <div class="field"><label>Kategorie</label><select id="tC"><option value="power">Elektrowerkzeug</option><option value="hand">Handwerkzeug</option><option value="ladder">Leiter</option><option value="other">Sonstiges</option></select></div>
+      <div class="field"><label>Bezirk</label><select id="tDist"><option>1. Bezirk</option><option>2. Bezirk</option><option>3. Bezirk</option><option>4. Bezirk</option><option>5. Bezirk</option></select></div>
+    </div>
+    <div class="err" id="tErr"></div>
+    <button class="form-btn prim" onclick="confirmAddTool()">Werkzeug einstellen</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"><span class="t-icon" id="tIco">✅</span><div><div class="t-title" id="tTit">–</div><div class="t-sub" id="tSub">–</div></div></div>
+
+<script>
+let user=null,craft=null;
+function goPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+id).classList.add('active');window.scrollTo(0,0);if(id==='chat')updChat();}
+function scrollTo(id){setTimeout(()=>{const e=document.getElementById(id);if(e)e.scrollIntoView({behavior:'smooth'});},80);}
+function setDark(on){document.documentElement.setAttribute('data-theme',on?'dark':'light');}
+function setTheme(){}
+function openM(id){document.getElementById(id).classList.add('open');}
+function closeM(id){document.getElementById(id).classList.remove('open');}
+function bgC(e,id){if(e.target===document.getElementById(id))closeM(id);}
+function showTab(t){['tabLogin','tabRegister','tabProfile'].forEach(x=>document.getElementById(x).style.display='none');document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).style.display='block';}
+function toast(ico,title,sub){document.getElementById('tIco').textContent=ico;document.getElementById('tTit').textContent=title;document.getElementById('tSub').textContent=sub||'';const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
+const DEMO=[{email:'test@fixnest.at',password:'1234',first:'Test',last:'Kunde',role:'customer',district:'5. Bezirk',since:'Jan 2026'},{email:'handwerker@fixnest.at',password:'1234',first:'Martin',last:'Kaufmann',role:'craftsman',district:'1. Bezirk',since:'Mär 2025'}];
+async function doLogin() {
+  const e = document.getElementById('liE').value.trim();
+  const p = document.getElementById('liP').value;
+  const err = document.getElementById('liErr');
+  err.style.display = 'none';
+  if (!e || !p) { err.textContent = 'Bitte E-Mail und Passwort eingeben.'; err.style.display = 'block'; return; }
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: e, password: p })
+    });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.error || 'Fehler beim Login'; err.style.display = 'block'; return; }
+    localStorage.setItem('token', data.token);
+    user = data.user;
+    afterLogin();
+  } catch { err.textContent = 'Server nicht erreichbar.'; err.style.display = 'block'; }
+}
+
+async function doReg() {
+  const f = document.getElementById('rF').value.trim();
+  const l = document.getElementById('rL').value.trim();
+  const e = document.getElementById('rE').value.trim();
+  const p = document.getElementById('rP').value;
+  const d = document.getElementById('rDist').value;
+  const err = document.getElementById('rErr');
+  err.style.display = 'none';
+  if (!f || !l || !e || !p || !d) { err.textContent = 'Bitte alle Felder ausfüllen.'; err.style.display = 'block'; return; }
+  if (p.length < 6) { err.textContent = 'Passwort muss mindestens 6 Zeichen haben.'; err.style.display = 'block'; return; }
+  try {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ first_name: f, last_name: l, email: e, password: p, role: document.getElementById('rRole').value, district: d })
+    });
+    const data = await res.json();
+    if (!res.ok) { err.textContent = data.error || 'Fehler bei Registrierung'; err.style.display = 'block'; return; }
+    localStorage.setItem('token', data.token);
+    user = data.user;
+    afterLogin();
+  } catch { err.textContent = 'Server nicht erreichbar.'; err.style.display = 'block'; }
+}
+function afterLogin(){
+  closeM('authM');
+  document.getElementById('loginBtn').style.display='none';
+  document.getElementById('registerBtn').style.display='none';
+  const ub=document.getElementById('userBtn');ub.style.display='flex';
+  const firstName = user.first_name || user.first || '';
+  const lastName = user.last_name || user.last || '';
+  const ini = ((firstName[0]||'?') + (lastName[0]||'')).toUpperCase();
+  document.getElementById('uAvSm').textContent=ini;
+  document.getElementById('uName').textContent=firstName;
+  document.getElementById('chatLink').style.display='';
+  document.getElementById('pAv').textContent=ini;
+  document.getElementById('pName').textContent=firstName+' '+lastName;
+  document.getElementById('pRole').textContent=user.role==='craftsman'?'Handwerker':'Kunde';
+  document.getElementById('pDist').textContent=user.district||'–';
+  document.getElementById('pSince').textContent=user.created_at ? new Date(user.created_at).toLocaleDateString('de-AT',{month:'short',year:'numeric'}) : 'Juni 2026';
+  toast('🎉','Willkommen, '+firstName+'!','Du bist jetzt angemeldet.');
+  updChat();
+}
+function doLogout(){user=null;document.getElementById('loginBtn').style.display='';document.getElementById('registerBtn').style.display='';document.getElementById('userBtn').style.display='none';document.getElementById('chatLink').style.display='none';closeM('authM');goPage('home');toast('👋','Abgemeldet','');}
+function updChat(){
+  const g=document.getElementById('chatGuest'),u=document.getElementById('chatUser');
+  if(user){g.style.display='none';u.style.display='block';
+    document.getElementById('fcList').innerHTML=[{name:'Martin Kaufmann',init:'MK',color:'#2E7DD1',prev:'Ich komme morgen um 10 Uhr',time:'10:32',unread:2,on:true},{name:'Sandra Fischer',init:'SF',color:'#18A16A',prev:'Danke für die Bewertung!',time:'Ges.',unread:0,on:false}].map((c,i)=>`<div class="conv-item ${i===0?'act':''}" onclick="swFC(this,'${c.name}','${c.init}','${c.color}',${c.on})"><div class="av" style="width:34px;height:34px;font-size:12px;background:${c.color}">${c.init}</div><div class="conv-info"><div class="conv-name">${c.name}</div><div class="conv-prev">${c.prev}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="conv-time">${c.time}</span>${c.unread?`<div class="unread-dot">${c.unread}</div>`:''}</div></div>`).join('');
+  }else{g.style.display='block';u.style.display='none';}
+}
+function selD(el,name,sub){document.querySelectorAll('.md').forEach(r=>r.classList.remove('act'));el.classList.add('act');document.getElementById('dName').textContent=name;document.getElementById('dSub').textContent=sub+' verfügbar';}
+function setPill(btn){btn.closest('.filter-row').querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));btn.classList.add('active');}
+function openCraft(name,init,role,dist,rat,color,online){
+  craft={name,init,role,dist,rat,color,online};
+  document.getElementById('mAv').textContent=init;document.getElementById('mAv').style.background=color;
+  document.getElementById('mName').textContent=name;document.getElementById('mRole').textContent=role+' · '+dist;
+  document.getElementById('mRat').textContent='★ '+rat+' (38 Bewertungen)';document.getElementById('mDist').textContent=dist;
+  document.getElementById('mDot').className='sdot'+(online?'':' off');
+  document.getElementById('mSt').textContent=online?'Online':'Offline';document.getElementById('mSt').style.color=online?'var(--green)':'var(--text3)';
+  openM('craftM');
+}
+function startChat(){if(!user){closeM('craftM');openM('authM');showTab('login');return;}closeM('craftM');goPage('chat');}
+function doBook(){if(!user){closeM('craftM');openM('authM');showTab('login');return;}closeM('craftM');document.getElementById('bookFor').textContent='Termin mit: '+(craft?.name||'–');openM('bookM');}
+function confirmBook(){const d=document.getElementById('bDesc').value.trim();if(!d){toast('⚠️','Bitte eine Beschreibung eingeben','');return;}closeM('bookM');toast('📅','Termin angefragt!','Du erhältst in Kürze eine Bestätigung.');}
+function reqT(btn,name){if(!user){openM('authM');showTab('login');return;}toast('📨','Anfrage gesendet!','"'+name+'" – der Besitzer wird benachrichtigt.');}
+function tryAdd(){if(!user){openM('authM');showTab('login');return;}openM('addToolM');}
+const catIco={power:'🔌',hand:'🔧',ladder:'🪜',other:'🛠️'};
+function confirmAddTool(){
+  const n=document.getElementById('tN').value.trim();
+  if(!n){document.getElementById('tErr').textContent='Bitte einen Namen eingeben.';document.getElementById('tErr').style.display='block';return;}
+  const cat=document.getElementById('tC').value,dist=document.getElementById('tDist').value;
+  closeM('addToolM');
+  const grid=document.getElementById('myToolsGrid');document.getElementById('myToolsSec').style.display='block';
+  const c=document.createElement('div');c.className='tool-card';
+  c.innerHTML=`<div class="tool-img">${catIco[cat]||'🛠️'}</div><div class="tool-body"><h4>${n}</h4><div class="tool-owner">👤 ${user.first} ${user.last||''} · ${dist}</div><div class="tool-foot"><span class="avail yes">Verfügbar</span><span style="font-size:11px;color:var(--text3)">Mein Werkzeug</span></div></div>`;
+  grid.appendChild(c);document.getElementById('tN').value='';document.getElementById('tD').value='';
+  toast('🔧','Werkzeug eingestellt!','"'+n+'" ist jetzt für Nachbarn sichtbar.');
+}
+function swConv(el,name,init,color,online){document.querySelectorAll('.chat-demo .conv-item').forEach(c=>c.classList.remove('act'));el.classList.add('act');document.getElementById('cAv').textContent=init;document.getElementById('cAv').style.background=color;document.getElementById('cName').textContent=name;document.getElementById('cDot').className='sdot'+(online?'':' off');document.getElementById('cStTxt').textContent=online?'Online':'Offline';document.getElementById('cSt').className='chat-hdr-st'+(online?'':' off');}
+function swFC(el,name,init,color,online){document.querySelectorAll('#fcList .conv-item').forEach(c=>c.classList.remove('act'));el.classList.add('act');document.getElementById('fcAv').textContent=init;document.getElementById('fcAv').style.background=color;document.getElementById('fcName').textContent=name;}
+function addMsg(mid,txt,type,isImg){
+  const t=new Date().toLocaleTimeString('de',{hour:'2-digit',minute:'2-digit'});
+  const d=document.createElement('div');d.className='msg '+type;
+  d.innerHTML=isImg?`<div class="fake-img">📷</div><div class="bubble" style="font-size:12px">Bild gesendet</div>${type==='s'?`<div class="msg-meta"><span class="msg-time">${t}</span><span class="ticks">✓✓</span></div>`:''}`:`<div class="bubble">${txt}</div><div class="msg-meta"><span class="msg-time">${t}</span>${type==='s'?'<span class="ticks g">✓✓</span>':''}</div>`;
+  const c=document.getElementById(mid);c.appendChild(d);c.scrollTop=c.scrollHeight;
+  if(type==='s'){setTimeout(()=>{d.querySelector('.ticks')?.classList.remove('g');},1500);setTimeout(()=>{const reps=['Alles klar!','Verstanden, danke.','Ich schaue mir das an.','Kein Problem!'];addMsg(mid,reps[Math.floor(Math.random()*reps.length)],'r',false);},1200);}
+}
+function sendMsg(mid,iid){const i=document.getElementById(iid);const t=i.value.trim();if(!t)return;i.value='';addMsg(mid,t,'s',false);}
+function sendImg(mid){addMsg(mid,'','s',true);}
+function toggleFaq(btn){const item=btn.closest('.faq-item');const open=item.classList.contains('open');document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));if(!open)item.classList.add('open');}
+</script>
+</body>
+</html>
