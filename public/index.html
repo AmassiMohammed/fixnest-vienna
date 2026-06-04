@@ -976,7 +976,46 @@ window.addEventListener('load', () => {
       .catch(() => localStorage.removeItem('token'));
   }
   loadTools();
+  loadCraftsmen();
 });
+
+// Handwerker aus Datenbank laden
+async function loadCraftsmen() {
+  try {
+    const res = await fetch('/api/craftsmen');
+    const craftsmen = await res.json();
+    if(craftsmen.length === 0) return;
+
+    // Hero Visual aktualisieren
+    const craftRows = document.querySelectorAll('.craft-row');
+    craftsmen.slice(0,2).forEach((c, i) => {
+      if(craftRows[i]) {
+        craftRows[i].onclick = () => openCraft(c.name, c.initials, c.role, c.district, c.rating, c.color, c.online===1);
+        craftRows[i].querySelector('.av').style.background = c.color;
+        craftRows[i].querySelector('.av').textContent = c.initials;
+        craftRows[i].querySelector('.craft-name').textContent = c.name;
+        craftRows[i].querySelector('.craft-role').textContent = c.role + ' · ' + c.district;
+        craftRows[i].querySelector('.stars').textContent = '★'.repeat(Math.round(c.rating)) + ' ' + c.rating;
+        const dot = craftRows[i].querySelector('.sdot');
+        const stxt = craftRows[i].querySelector('.stxt');
+        dot.className = 'sdot' + (c.online ? '' : ' off');
+        stxt.className = 'stxt' + (c.online ? '' : ' off');
+        stxt.textContent = c.online ? 'Online' : 'Offline';
+      }
+    });
+
+    // Karten Panel aktualisieren
+    const cList = document.querySelector('.c-list');
+    if(cList) {
+      cList.innerHTML = craftsmen.slice(0,5).map(c => `
+        <div class="c-item" onclick="openCraft('${c.name}','${c.initials}','${c.role}','${c.district}',${c.rating},'${c.color}',${c.online===1})">
+          <div class="av" style="width:34px;height:34px;font-size:12px;background:${c.color}">${c.initials}</div>
+          <div class="c-info"><div class="c-name">${c.name}</div><div class="c-role"><span class="tag">${c.role}</span></div></div>
+          <div class="c-meta"><div class="c-rat">★ ${c.rating}</div><div class="${c.online ? 'c-avl' : 'c-bsy'}">${c.online ? 'Verfügbar' : 'Beschäftigt'}</div></div>
+        </div>`).join('');
+    }
+  } catch(e) { console.log('Craftsmen Fehler:', e); }
+}
 </script>
 </body>
 </html>
