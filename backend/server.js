@@ -78,6 +78,14 @@ db.serialize(() => {
     response_time TEXT DEFAULT '~15 Min.',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS messages (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sender_id INTEGER,
+    receiver_name TEXT,
+    message TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
 });
   // Demo Handwerker einfügen
 db.get(`SELECT COUNT(*) as count FROM craftsmen`, [], (err, row) => {
@@ -249,6 +257,32 @@ app.post('/api/craftsmen', authMiddleware, (req, res) => {
       }
     );
   });
+});
+
+// Nachricht senden
+app.post('/api/messages', authMiddleware, (req, res) => {
+  const { receiver_name, message } = req.body;
+  if(!message) return res.status(400).json({ error: 'Nachricht fehlt' });
+  db.run(
+    `INSERT INTO messages (sender_id, receiver_name, message) VALUES (?,?,?)`,
+    [req.user.id, receiver_name, message],
+    function(err) {
+      if(err) return res.status(500).json({ error: err.message });
+      res.json({ id: this.lastID, message, created_at: new Date().toISOString() });
+    }
+  );
+});
+
+// Nachrichten abrufen
+app.get('/api/messages/:receiver', authMiddleware, (req, res) => {
+  db.all(
+    `SELECT messages.*, users.first_name, users.last_name 
+     FROM messages LEFT JOIN users ON messages.sender_id = users.id
+     WHERE (messages.sender_id = ? AND messages.receiver_name = ?)
+     ORDER BY messages.created_at ASC`,
+    [req.user.id, req.params.receiver],
+    (err, rows) => res.json(rows || [])
+  );
 });
 
 // Alle anderen Routen → index.html
