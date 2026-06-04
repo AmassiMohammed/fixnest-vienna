@@ -64,7 +64,41 @@ db.serialize(() => {
     comment TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
+
+  db.run(`CREATE TABLE IF NOT EXISTS craftsmen (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    initials TEXT,
+    role TEXT,
+    district TEXT,
+    rating REAL DEFAULT 0,
+    color TEXT DEFAULT '#2E7DD1',
+    online INTEGER DEFAULT 0,
+    orders INTEGER DEFAULT 0,
+    response_time TEXT DEFAULT '~15 Min.',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
 });
+  // Demo Handwerker einfügen
+db.get(`SELECT COUNT(*) as count FROM craftsmen`, [], (err, row) => {
+  if(row && row.count === 0) {
+    const craftsmen = [
+      ['Martin Kaufmann','MK','Klempner','1010 Wien',4.9,'#2E7DD1',1],
+      ['Sandra Fischer','SF','Elektrikerin','1030 Wien',4.6,'#18A16A',0],
+      ['Anna Huber','AH','Malerin','1010 Wien',4.7,'#7C5ABF',1],
+      ['Josef Berger','JB','Elektriker','1010 Wien',4.5,'#C05A20',0],
+      ['Klaus Weber','KW','Tischler','1020 Wien',4.8,'#D4821A',1],
+      ['Maria Novak','MN','Klempnerin','1050 Wien',4.4,'#C0392B',0],
+      ['Peter Huber','PH','Maler','1080 Wien',4.6,'#2E7DD1',1],
+      ['Lisa Müller','LM','Elektrikerin','1090 Wien',4.7,'#18A16A',1],
+    ];
+    craftsmen.forEach(c => {
+      db.run(`INSERT INTO craftsmen (name,initials,role,district,rating,color,online) VALUES (?,?,?,?,?,?,?)`, c);
+    });
+    console.log('✅ Demo-Handwerker eingefügt');
+  }
+    });
+
 
 // ── Auth Middleware ───────────────────────────────────────
 function authMiddleware(req, res, next) {
@@ -181,6 +215,40 @@ app.get('/api/reviews/:craftsman', (req, res) => {
     [req.params.craftsman],
     (err, rows) => res.json(rows || [])
   );
+});
+
+// Alle Handwerker abrufen
+app.get('/api/craftsmen', (req, res) => {
+  db.all(`SELECT * FROM craftsmen ORDER BY rating DESC`, [], (err, rows) => {
+    res.json(rows || []);
+  });
+});
+
+// Handwerker nach Bezirk filtern
+app.get('/api/craftsmen/:district', (req, res) => {
+  db.all(`SELECT * FROM craftsmen WHERE district LIKE ? ORDER BY rating DESC`,
+    ['%'+req.params.district+'%'],
+    (err, rows) => res.json(rows || [])
+  );
+});
+
+// Handwerker registrieren (nur für Handwerker-Accounts)
+app.post('/api/craftsmen', authMiddleware, (req, res) => {
+  if(req.user.role !== 'craftsman')
+    return res.status(403).json({ error: 'Nur für Handwerker' });
+  const { role, district, color } = req.body;
+  db.get(`SELECT * FROM users WHERE id = ?`, [req.user.id], (err, user) => {
+    if(!user) return res.status(404).json({ error: 'User nicht gefunden' });
+    const initials = (user.first_name[0] + (user.last_name?user.last_name[0]:'')).toUpperCase();
+    db.run(`INSERT OR IGNORE INTO craftsmen (name, initials, role, district, color, online)
+            VALUES (?,?,?,?,?,1)`,
+      [user.first_name+' '+user.last_name, initials, role, district, color||'#2E7DD1'],
+      function(err) {
+        if(err) return res.status(500).json({ error: err.message });
+        res.json({ id: this.lastID });
+      }
+    );
+  });
 });
 
 // Alle anderen Routen → index.html

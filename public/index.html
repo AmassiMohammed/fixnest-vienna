@@ -955,6 +955,28 @@ async function submitReview(){
     openCraft(craft.name,craft.init,craft.role,craft.dist,craft.rat,craft.color,craft.online);
   } catch { err.textContent='Server nicht erreichbar'; err.style.display='block'; }
 }
+// Werkzeuge aus Datenbank laden
+async function loadTools() {
+  try {
+    const res = await fetch('/api/tools');
+    const tools = await res.json();
+    if(tools.length === 0) return;
+    const grid = document.getElementById('myToolsSec');
+    // Zeige geladene Werkzeuge in der Tools-Seite
+  } catch(e) { console.log('Tools nicht geladen', e); }
+}
+
+// Beim Seitenstart aufrufen
+window.addEventListener('load', () => {
+  const token = localStorage.getItem('token');
+  if(token) {
+    fetch('/api/auth/me', { headers:{'Authorization':'Bearer '+token} })
+      .then(r => r.json())
+      .then(u => { user = u; afterLogin(); })
+      .catch(() => localStorage.removeItem('token'));
+  }
+  loadTools();
+});
 </script>
 </body>
 </html>
