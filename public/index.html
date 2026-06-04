@@ -814,20 +814,59 @@ function openCraft(name,init,role,dist,rat,color,online){
 }
 function startChat(){if(!user){closeM('craftM');openM('authM');showTab('login');return;}closeM('craftM');goPage('chat');}
 function doBook(){if(!user){closeM('craftM');openM('authM');showTab('login');return;}closeM('craftM');document.getElementById('bookFor').textContent='Termin mit: '+(craft?.name||'–');openM('bookM');}
-function confirmBook(){const d=document.getElementById('bDesc').value.trim();if(!d){toast('⚠️','Bitte eine Beschreibung eingeben','');return;}closeM('bookM');toast('📅','Termin angefragt!','Du erhältst in Kürze eine Bestätigung.');}
+async function confirmBook(){
+  const desc=document.getElementById('bDesc').value.trim();
+  if(!desc){toast('⚠️','Bitte eine Beschreibung eingeben','');return;}
+  const token=localStorage.getItem('token');
+  try {
+    const res=await fetch('/api/bookings',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({
+        craftsman_name:craft?.name||'–',
+        description:desc,
+        district:document.getElementById('bDist').value,
+        address:document.getElementById('bAddr').value,
+        date:document.getElementById('bDate').value
+      })
+    });
+    if(!res.ok){toast('⚠️','Fehler beim Buchen','');return;}
+    closeM('bookM');
+    toast('📅','Termin angefragt!','Du erhältst in Kürze eine Bestätigung.');
+  } catch {
+    toast('⚠️','Server nicht erreichbar','');
+  }
+}
 function reqT(btn,name){if(!user){openM('authM');showTab('login');return;}toast('📨','Anfrage gesendet!','"'+name+'" – der Besitzer wird benachrichtigt.');}
 function tryAdd(){if(!user){openM('authM');showTab('login');return;}openM('addToolM');}
-const catIco={power:'🔌',hand:'🔧',ladder:'🪜',other:'🛠️'};
-function confirmAddTool(){
+const catIco={power:'⚡',hand:'🔧',ladder:'🪜',other:'🛠️'};
+async function confirmAddTool(){
   const n=document.getElementById('tN').value.trim();
   if(!n){document.getElementById('tErr').textContent='Bitte einen Namen eingeben.';document.getElementById('tErr').style.display='block';return;}
-  const cat=document.getElementById('tC').value,dist=document.getElementById('tDist').value;
-  closeM('addToolM');
-  const grid=document.getElementById('myToolsGrid');document.getElementById('myToolsSec').style.display='block';
-  const c=document.createElement('div');c.className='tool-card';
-  c.innerHTML=`<div class="tool-img">${catIco[cat]||'🛠️'}</div><div class="tool-body"><h4>${n}</h4><div class="tool-owner">👤 ${user.first} ${user.last||''} · ${dist}</div><div class="tool-foot"><span class="avail yes">Verfügbar</span><span style="font-size:11px;color:var(--text3)">Mein Werkzeug</span></div></div>`;
-  grid.appendChild(c);document.getElementById('tN').value='';document.getElementById('tD').value='';
-  toast('🔧','Werkzeug eingestellt!','"'+n+'" ist jetzt für Nachbarn sichtbar.');
+  const cat=document.getElementById('tC').value;
+  const dist=document.getElementById('tDist').value;
+  const desc=document.getElementById('tD').value.trim();
+  const token=localStorage.getItem('token');
+  try {
+    const res=await fetch('/api/tools',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({name:n,description:desc,category:cat,district:dist})
+    });
+    const data=await res.json();
+    if(!res.ok){document.getElementById('tErr').textContent=data.error||'Fehler';document.getElementById('tErr').style.display='block';return;}
+    closeM('addToolM');
+    const grid=document.getElementById('myToolsGrid');
+    document.getElementById('myToolsSec').style.display='block';
+    const c=document.createElement('div');c.className='tool-card';
+    c.innerHTML=`<div class="tool-img">${catIco[cat]||'🛠️'}</div><div class="tool-body"><h4>${n}</h4><div class="tool-owner">👤 ${user.first_name} ${user.last_name||''} · ${dist}</div><div class="tool-foot"><span class="avail yes">Verfügbar</span><span style="font-size:11px;color:var(--text3)">Mein Werkzeug</span></div></div>`;
+    grid.appendChild(c);
+    document.getElementById('tN').value='';document.getElementById('tD').value='';
+    toast('🔧','Werkzeug eingestellt!','"'+n+'" ist jetzt für Nachbarn sichtbar.');
+  } catch {
+    document.getElementById('tErr').textContent='Server nicht erreichbar.';
+    document.getElementById('tErr').style.display='block';
+  }
 }
 function swConv(el,name,init,color,online){document.querySelectorAll('.chat-demo .conv-item').forEach(c=>c.classList.remove('act'));el.classList.add('act');document.getElementById('cAv').textContent=init;document.getElementById('cAv').style.background=color;document.getElementById('cName').textContent=name;document.getElementById('cDot').className='sdot'+(online?'':' off');document.getElementById('cStTxt').textContent=online?'Online':'Offline';document.getElementById('cSt').className='chat-hdr-st'+(online?'':' off');}
 function swFC(el,name,init,color,online){document.querySelectorAll('#fcList .conv-item').forEach(c=>c.classList.remove('act'));el.classList.add('act');document.getElementById('fcAv').textContent=init;document.getElementById('fcAv').style.background=color;document.getElementById('fcName').textContent=name;}
