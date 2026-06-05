@@ -284,10 +284,10 @@ footer{background:#090B14;color:rgba(255,255,255,.6);padding:56px 2rem 28px}
   <div class="nav-logo" onclick="goPage('home')">Fix<span>Nest</span> Vienna</div>
   <div class="nav-links">
     <a onclick="goPage('home')">Startseite</a>
-    <a onclick="goPage('home');scrollTo('map-anchor')">Bezirkskarte</a>
+    <a onclick="goPage('home');scrollToEl('map-anchor')">Bezirkskarte</a>
     <a onclick="goPage('tools')">Werkzeug leihen</a>
     <a onclick="goPage('blog')">Blog</a>
-    <a onclick="goPage('home');scrollTo('faq-anchor')">FAQ</a>
+    <a onclick="goPage('home');scrollToEl('faq-anchor')">FAQ</a>
     <a id="chatLink" style="display:none" onclick="goPage('chat')">💬 Chat</a>
   </div>
   <div class="nav-right">
@@ -319,7 +319,7 @@ footer{background:#090B14;color:rgba(255,255,255,.6);padding:56px 2rem 28px}
       <h1>Dein <em>lokaler</em> Partner für Heimreparaturen</h1>
       <p>Finde Handwerker in deinem Bezirk oder leihe Werkzeug von Nachbarn – schnell, einfach, zuverlässig.</p>
       <div class="hero-btns">
-        <button class="btn-lg primary" onclick="goPage('home');scrollTo('map-anchor')">Handwerker finden</button>
+        <button class="btn-lg primary" onclick="goPage('home');scrollToEl('map-anchor')">Handwerker finden</button>
         <button class="btn-lg outline" onclick="goPage('tools')">Werkzeug leihen</button>
       </div>
       <div class="hero-stats">
@@ -750,8 +750,8 @@ footer{background:#090B14;color:rgba(255,255,255,.6);padding:56px 2rem 28px}
 
 <script>
 let user=null,craft=null;
-function goPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+id).classList.add('active');window.scrollTo(0,0);if(id==='chat')updChat();}
-function scrollTo(id){setTimeout(()=>{const e=document.getElementById(id);if(e)e.scrollIntoView({behavior:'smooth'});},80);}
+function goPage(id){document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));document.getElementById('page-'+id).classList.add('active');window.scrollToEl(0,0);if(id==='chat')updChat();}
+function scrollToEl(id){setTimeout(()=>{const e=document.getElementById(id);if(e)e.scrollIntoView({behavior:'smooth'});},80);}
 function setDark(on){document.documentElement.setAttribute('data-theme',on?'dark':'light');}
 function setTheme(){}
 function openM(id){document.getElementById(id).classList.add('open');}
@@ -821,11 +821,38 @@ function afterLogin(){
   updChat();
 }
 function doLogout(){user=null;document.getElementById('loginBtn').style.display='';document.getElementById('registerBtn').style.display='';document.getElementById('userBtn').style.display='none';document.getElementById('chatLink').style.display='none';closeM('authM');goPage('home');toast('👋','Abgemeldet','');}
-function updChat(){
-  const g=document.getElementById('chatGuest'),u=document.getElementById('chatUser');
-  if(user){g.style.display='none';u.style.display='block';
-    document.getElementById('fcList').innerHTML=[{name:'Martin Kaufmann',init:'MK',color:'#2E7DD1',prev:'Ich komme morgen um 10 Uhr',time:'10:32',unread:2,on:true},{name:'Sandra Fischer',init:'SF',color:'#18A16A',prev:'Danke für die Bewertung!',time:'Ges.',unread:0,on:false}].map((c,i)=>`<div class="conv-item ${i===0?'act':''}" onclick="swFC(this,'${c.name}','${c.init}','${c.color}',${c.on})"><div class="av" style="width:34px;height:34px;font-size:12px;background:${c.color}">${c.init}</div><div class="conv-info"><div class="conv-name">${c.name}</div><div class="conv-prev">${c.prev}</div></div><div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px"><span class="conv-time">${c.time}</span>${c.unread?`<div class="unread-dot">${c.unread}</div>`:''}</div></div>`).join('');
-  }else{g.style.display='block';u.style.display='none';}
+async function updChat(){
+  const g=document.getElementById('chatGuest');
+  const u=document.getElementById('chatUser');
+  if(user){
+    g.style.display='none';u.style.display='block';
+    // Konversationen laden
+    try {
+      const token=localStorage.getItem('token');
+      const res=await fetch('/api/conversations',{headers:{'Authorization':'Bearer '+token}});
+      const convs=await res.json();
+      const fcList=document.getElementById('fcList');
+      if(convs.length===0){
+        fcList.innerHTML='<div style="padding:14px;font-size:13px;color:var(--text3)">Noch keine Konversationen.</div>';
+      } else {
+        fcList.innerHTML=convs.map((c,i)=>{
+          const other = c.user1_id===user.id ? {name:c.u2_first+' '+c.u2_last, id:c.user2_id} : {name:c.u1_first+' '+c.u1_last, id:c.user1_id};
+          const init=(other.name[0]||'?').toUpperCase();
+          return `<div class="conv-item ${i===0?'act':''}" onclick="openConv(${other.id},'${other.name}','${init}')">
+            <div class="av" style="width:34px;height:34px;font-size:12px;background:var(--accent)">${init}</div>
+            <div class="conv-info"><div class="conv-name">${other.name}</div><div class="conv-prev">${c.last_message||''}</div></div>
+          </div>`;
+        }).join('');
+        // Erste Konversation öffnen
+        const first=convs[0];
+        const otherId=first.user1_id===user.id?first.user2_id:first.user1_id;
+        const otherName=first.user1_id===user.id?first.u2_first+' '+first.u2_last:first.u1_first+' '+first.u1_last;
+        openConv(otherId, otherName, otherName[0].toUpperCase());
+      }
+    } catch(e){ console.log('Conv Fehler:',e); }
+  } else {
+    g.style.display='block';u.style.display='none';
+  }
 }
 function selD(el,name,sub){document.querySelectorAll('.md').forEach(r=>r.classList.remove('act'));el.classList.add('act');document.getElementById('dName').textContent=name;document.getElementById('dSub').textContent=sub+' verfügbar';}
 function setPill(btn){btn.closest('.filter-row').querySelectorAll('.pill').forEach(p=>p.classList.remove('active'));btn.classList.add('active');}
@@ -850,7 +877,17 @@ async function openCraft(name,init,role,dist,rat,color,online){
     ? '<p style="font-size:13px;color:var(--text3)">Noch keine Bewertungen.</p>'
     : reviews.slice(0,3).map(r=>`<div class="review-row"><div class="rev-top"><span class="rev-name">${r.first_name||'Anonym'} ${r.last_name?r.last_name[0]+'.':''}</span><span class="stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</span></div><div class="rev-txt">${r.comment||''}</div></div>`).join('');
 }
-function startChat(){if(!user){closeM('craftM');openM('authM');showTab('login');return;}closeM('craftM');goPage('chat');}
+async function startChat(){
+  if(!user){closeM('craftM');openM('authM');showTab('login');return;}
+  closeM('craftM');
+  // Suche den Handwerker-User in der DB
+  try {
+    const res = await fetch('/api/users?name='+encodeURIComponent(craft.name));
+    const data = await res.json();
+    if(data && data.id) currentReceiverId = data.id;
+  } catch(e){}
+  goPage('chat');
+}
 function doBook(){if(!user){closeM('craftM');openM('authM');showTab('login');return;}closeM('craftM');document.getElementById('bookFor').textContent='Termin mit: '+(craft?.name||'–');openM('bookM');}
 async function confirmBook(){
   const desc=document.getElementById('bDesc').value.trim();
@@ -915,7 +952,21 @@ function addMsg(mid,txt,type,isImg){
   const c=document.getElementById(mid);c.appendChild(d);c.scrollTop=c.scrollHeight;
   if(type==='s'){setTimeout(()=>{d.querySelector('.ticks')?.classList.remove('g');},1500);setTimeout(()=>{const reps=['Alles klar!','Verstanden, danke.','Ich schaue mir das an.','Kein Problem!'];addMsg(mid,reps[Math.floor(Math.random()*reps.length)],'r',false);},1200);}
 }
-function sendMsg(mid,iid){const i=document.getElementById(iid);const t=i.value.trim();if(!t)return;i.value='';addMsg(mid,t,'s',false);}
+async function sendMsgFull(){
+  const inp=document.getElementById('fcInp');
+  const t=inp.value.trim();
+  if(!t||!currentReceiverId) return;
+  inp.value='';
+  addMsg('fcMsgs',t,'s',false);
+  const token=localStorage.getItem('token');
+  try {
+    await fetch('/api/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+token},
+      body:JSON.stringify({receiver_id:currentReceiverId, message:t})
+    });
+  } catch(e){ console.log('Send Fehler:',e); }
+}
 function sendImg(mid){addMsg(mid,'','s',true);}
 function toggleFaq(btn){const item=btn.closest('.faq-item');const open=item.classList.contains('open');document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));if(!open)item.classList.add('open');}
 let selectedStar = 0;
@@ -1015,6 +1066,32 @@ async function loadCraftsmen() {
         </div>`).join('');
     }
   } catch(e) { console.log('Craftsmen Fehler:', e); }
+}
+
+let currentReceiverId = null;
+
+async function openConv(receiverId, name, init) {
+  currentReceiverId = receiverId;
+  document.getElementById('fcAv').textContent = init;
+  document.getElementById('fcName').textContent = name;
+  // Nachrichten laden
+  const token = localStorage.getItem('token');
+  try {
+    const res = await fetch('/api/messages/'+receiverId, {
+      headers:{'Authorization':'Bearer '+token}
+    });
+    const msgs = await res.json();
+    const box = document.getElementById('fcMsgs');
+    box.innerHTML = msgs.map(m => {
+      const isMine = m.sender_id === user.id;
+      const time = new Date(m.created_at).toLocaleTimeString('de',{hour:'2-digit',minute:'2-digit'});
+      return `<div class="msg ${isMine?'s':'r'}">
+        <div class="bubble">${m.message}</div>
+        <div class="msg-meta"><span class="msg-time">${time}</span>${isMine?'<span class="ticks">✓✓</span>':''}</div>
+      </div>`;
+    }).join('');
+    box.scrollTop = box.scrollHeight;
+  } catch(e){ console.log('Msgs Fehler:',e); }
 }
 </script>
 </body>

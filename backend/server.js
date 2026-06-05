@@ -81,10 +81,19 @@ db.serialize(() => {
 
   db.run(`CREATE TABLE IF NOT EXISTS messages (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    sender_id INTEGER,
-    receiver_name TEXT,
+    sender_id INTEGER NOT NULL,
+    receiver_id INTEGER NOT NULL,
     message TEXT NOT NULL,
+    read INTEGER DEFAULT 0,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  )`);
+
+db.run(`CREATE TABLE IF NOT EXISTS conversations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user1_id INTEGER NOT NULL,
+    user2_id INTEGER NOT NULL,
+    last_message TEXT,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
   )`);
 });
   // Demo Handwerker einfügen
@@ -259,28 +268,55 @@ app.post('/api/craftsmen', authMiddleware, (req, res) => {
   });
 });
 
+
 // Nachricht senden
 app.post('/api/messages', authMiddleware, (req, res) => {
-  const { receiver_name, message } = req.body;
-  if(!message) return res.status(400).json({ error: 'Nachricht fehlt' });
+  const { receiver_id, message } = req.body;
+  if(!message || !receiver_id) 
+    return res.status(400).json({ error: 'Pflichtfelder fehlen' });
+  
   db.run(
-    `INSERT INTO messages (sender_id, receiver_name, message) VALUES (?,?,?)`,
-    [req.user.id, receiver_name, message],
+    `INSERT INTO messages (sender_id, receiver_id, message) VALUES (?,?,?)`,
+    [req.user.id, receiver_id, message],
     function(err) {
       if(err) return res.status(500).json({ error: err.message });
+      // Konversation aktualisieren
+      db.run(`INSERT INTO conversations (user1_id, user2_id, last_message, updated_at)
+              VALUES (?,?,?,CURRENT_TIMESTAMP)
+              ON CONFLICT DO UPDATE SET last_message=?, updated_at=CURRENT_TIMESTAMP`,
+        [Math.min(req.user.id, receiver_id), Math.max(req.user.id, receiver_id), message, message]
+      );
       res.json({ id: this.lastID, message, created_at: new Date().toISOString() });
     }
   );
 });
 
-// Nachrichten abrufen
-app.get('/api/messages/:receiver', authMiddleware, (req, res) => {
+// Nachrichten zwischen zwei Usern abrufen
+app.get('/api/messages/:receiver_id', authMiddleware, (req, res) => {
   db.all(
-    `SELECT messages.*, users.first_name, users.last_name 
-     FROM messages LEFT JOIN users ON messages.sender_id = users.id
-     WHERE (messages.sender_id = ? AND messages.receiver_name = ?)
-     ORDER BY messages.created_at ASC`,
-    [req.user.id, req.params.receiver],
+    `SELECT messages.*, 
+            s.first_name as sender_first, s.last_name as sender_last
+     FROM messages 
+     LEFT JOIN users s ON messages.sender_id = s.id
+     WHERE (sender_id=? AND receiver_id=?) OR (sender_id=? AND receiver_id=?)
+     ORDER BY created_at ASC`,
+    [req.user.id, req.params.receiver_id, req.params.receiver_id, req.user.id],
+    (err, rows) => res.json(rows || [])
+  );
+});
+
+// Alle Konversationen des Users
+app.get('/api/conversations', authMiddleware, (req, res) => {
+  db.all(
+    `SELECT conversations.*, 
+            u1.first_name as u1_first, u1.last_name as u1_last,
+            u2.first_name as u2_first, u2.last_name as u2_last
+     FROM conversations
+     LEFT JOIN users u1 ON conversations.user1_id = u1.id
+     LEFT JOIN users u2 ON conversations.user2_id = u2.id
+     WHERE user1_id=? OR user2_id=?
+     ORDER BY updated_at DESC`,
+    [req.user.id, req.user.id],
     (err, rows) => res.json(rows || [])
   );
 });
@@ -292,4 +328,14 @@ app.get('/{*path}', (req, res) => {
 
 app.listen(PORT, () => {
   console.log(`🔧 FixNest Vienna läuft auf http://localhost:${PORT}`);
+});
+
+// User nach Name suchen
+app.get('/api/users', (req, res) => {
+  const name = req.query.name || '';
+  const parts = name.split(' ');
+  db.get(`SELECT id, first_name, last_name, role FROM users WHERE first_name=? AND last_name=?`,
+    [parts[0], parts[1]||''],
+    (err, row) => res.json(row || {})
+  );
 });
