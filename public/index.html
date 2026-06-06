@@ -632,7 +632,21 @@ footer{background:#090B14;color:rgba(255,255,255,.6);padding:56px 2rem 28px}
       <div class="field"><label>E-Mail</label><input type="email" id="rE" placeholder="name@example.com"></div>
       <div class="field"><label>Passwort</label><input type="password" id="rP" placeholder="Mindestens 6 Zeichen"></div>
       <div class="field-row">
-        <div class="field"><label>Ich bin...</label><select id="rRole"><option value="customer">Kunde</option><option value="craftsman">Handwerker</option></select></div>
+        <div class="field"><label>Ich bin...</label><select id="rRole" onchange="document.getElementById('berufsfeld').style.display=this.value==='craftsman'?'block':'none'"></select>><option value="customer">Kunde</option><option value="craftsman">Handwerker</option></select></div>
+        <div class="field" id="berufsfeld" style="display:none">
+        <label>Beruf</label>
+        <select id="rBeruf">
+          <option value="">Wählen...</option>
+          <option>Klempner</option>
+          <option>Elektrikerin</option>
+          <option>Elektriker</option>
+          <option>Tischler</option>
+          <option>Malerin</option>
+          <option>Maler</option>
+          <option>Fliesenleger</option>
+          <option>Schlosser</option>
+        </select>
+      </div>
         <div class="field"><label>Bezirk</label>
           <select id="rDist"><option value="">Wählen...</option>
             <option>1. Bezirk</option><option>2. Bezirk</option><option>3. Bezirk</option><option>4. Bezirk</option><option>5. Bezirk</option>
@@ -760,46 +774,33 @@ function bgC(e,id){if(e.target===document.getElementById(id))closeM(id);}
 function showTab(t){['tabLogin','tabRegister','tabProfile'].forEach(x=>document.getElementById(x).style.display='none');document.getElementById('tab'+t.charAt(0).toUpperCase()+t.slice(1)).style.display='block';}
 function toast(ico,title,sub){document.getElementById('tIco').textContent=ico;document.getElementById('tTit').textContent=title;document.getElementById('tSub').textContent=sub||'';const t=document.getElementById('toast');t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3500);}
 const DEMO=[{email:'test@fixnest.at',password:'1234',first:'Test',last:'Kunde',role:'customer',district:'5. Bezirk',since:'Jan 2026'},{email:'handwerker@fixnest.at',password:'1234',first:'Martin',last:'Kaufmann',role:'craftsman',district:'1. Bezirk',since:'Mär 2025'}];
-async function doLogin() {
-  const e = document.getElementById('liE').value.trim();
-  const p = document.getElementById('liP').value;
-  const err = document.getElementById('liErr');
-  err.style.display = 'none';
-  if (!e || !p) { err.textContent = 'Bitte E-Mail und Passwort eingeben.'; err.style.display = 'block'; return; }
-  try {
-    const res = await fetch('/api/auth/login', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: e, password: p })
-    });
-    const data = await res.json();
-    if (!res.ok) { err.textContent = data.error || 'Fehler beim Login'; err.style.display = 'block'; return; }
-    localStorage.setItem('token', data.token);
-    user = data.user;
-    afterLogin();
-  } catch { err.textContent = 'Server nicht erreichbar.'; err.style.display = 'block'; }
+async function doLogin(){
+  const e=document.getElementById('liE').value.trim(),p=document.getElementById('liP').value;
+  const err=document.getElementById('liErr');err.style.display='none';
+  if(!e||!p){err.textContent='Bitte E-Mail und Passwort eingeben.';err.style.display='block';return;}
+  try{
+    const res=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:e,password:p})});
+    const data=await res.json();
+    if(!res.ok){err.textContent=data.error||'Fehler';err.style.display='block';return;}
+    localStorage.setItem('token',data.token);user=data.user;afterLogin();
+  }catch{err.textContent='Server nicht erreichbar.';err.style.display='block';}
 }
 
-async function doReg() {
-  const f = document.getElementById('rF').value.trim();
-  const l = document.getElementById('rL').value.trim();
-  const e = document.getElementById('rE').value.trim();
-  const p = document.getElementById('rP').value;
-  const d = document.getElementById('rDist').value;
-  const err = document.getElementById('rErr');
-  err.style.display = 'none';
-  if (!f || !l || !e || !p || !d) { err.textContent = 'Bitte alle Felder ausfüllen.'; err.style.display = 'block'; return; }
-  if (p.length < 6) { err.textContent = 'Passwort muss mindestens 6 Zeichen haben.'; err.style.display = 'block'; return; }
-  try {
-    const res = await fetch('/api/auth/register', {
-      method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ first_name: f, last_name: l, email: e, password: p, role: document.getElementById('rRole').value, district: d })
-    });
-    const data = await res.json();
-    if (!res.ok) { err.textContent = data.error || 'Fehler bei Registrierung'; err.style.display = 'block'; return; }
-    localStorage.setItem('token', data.token);
-    user = data.user;
-    afterLogin();
-  } catch { err.textContent = 'Server nicht erreichbar.'; err.style.display = 'block'; }
+async function doReg(){
+  const f=document.getElementById('rF').value.trim(),l=document.getElementById('rL').value.trim();
+  const e=document.getElementById('rE').value.trim(),p=document.getElementById('rP').value;
+  const d=document.getElementById('rDist').value,role=document.getElementById('rRole').value;
+  const beruf=document.getElementById('rBeruf').value;
+  const err=document.getElementById('rErr');err.style.display='none';
+  if(!f||!l||!e||!p||!d){err.textContent='Bitte alle Felder ausfüllen.';err.style.display='block';return;}
+  if(p.length<6){err.textContent='Passwort mind. 6 Zeichen.';err.style.display='block';return;}
+  if(role==='craftsman'&&!beruf){err.textContent='Bitte Beruf auswählen.';err.style.display='block';return;}
+  try{
+    const res=await fetch('/api/auth/register',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({first_name:f,last_name:l,email:e,password:p,role,district:d,beruf})});
+    const data=await res.json();
+    if(!res.ok){err.textContent=data.error||'Fehler';err.style.display='block';return;}
+    localStorage.setItem('token',data.token);user=data.user;afterLogin();
+  }catch{err.textContent='Server nicht erreichbar.';err.style.display='block';}
 }
 function afterLogin(){
   closeM('authM');
@@ -1011,10 +1012,22 @@ async function loadTools() {
   try {
     const res = await fetch('/api/tools');
     const tools = await res.json();
-    if(tools.length === 0) return;
-    const grid = document.getElementById('myToolsSec');
-    // Zeige geladene Werkzeuge in der Tools-Seite
-  } catch(e) { console.log('Tools nicht geladen', e); }
+    if (!tools.length) return;
+    const grid = document.getElementById('toolsGrid');
+    const catIcons = { power: '⚡', hand: '🔧', ladder: '🪜', other: '🛠️' };
+    grid.innerHTML = tools.map(t => `
+      <div class="tool-card">
+        <div class="tool-img">${catIcons[t.category] || '🛠️'}</div>
+        <div class="tool-body">
+          <h4>${t.name}</h4>
+          <div class="tool-owner">👤 ${t.first_name || '?'} ${t.last_name || ''} · ${t.district || ''}</div>
+          <div class="tool-foot">
+            <span class="avail ${t.available ? 'yes' : 'no'}">${t.available ? 'Verfügbar' : 'Verliehen'}</span>
+            <button class="req-btn" ${t.available ? `onclick="reqT('${t.name}')"` : 'disabled'}>${t.available ? 'Anfragen' : 'Anfragen'}</button>
+          </div>
+        </div>
+      </div>`).join('');
+  } catch(e) { console.log('Tools Fehler:', e); }
 }
 
 // Beim Seitenstart aufrufen
@@ -1026,8 +1039,8 @@ window.addEventListener('load', () => {
       .then(u => { user = u; afterLogin(); })
       .catch(() => localStorage.removeItem('token'));
   }
-  loadTools();
   loadCraftsmen();
+  loadTools();
 });
 
 // Handwerker aus Datenbank laden
